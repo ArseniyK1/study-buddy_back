@@ -9,7 +9,6 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { type handleUnaryCall, Metadata, type UntypedServiceImplementation } from "@grpc/grpc-js";
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
-import { UInt32Value } from "./google/protobuf/wrappers";
 
 export const protobufPackage = "auth";
 
@@ -25,10 +24,24 @@ export interface SignUpRequest {
   roleId?: number | undefined;
 }
 
+export interface FindAllUsersRequest {
+  nameFilter?: string | undefined;
+}
+
+export interface GetProfileRequest {
+  id: number;
+}
+
 export interface UserName {
   firstName: string;
   lastName: string;
   middleName?: string | undefined;
+}
+
+export interface Role {
+  id: number;
+  value: string;
+  description: string;
 }
 
 export interface AuthResponse {
@@ -45,17 +58,8 @@ export interface User {
   lastName: string;
   middleName?: string | undefined;
   email: string;
-  roleId: number;
-}
-
-export interface Error {
-  message: string;
-  code: number;
-  stackTrace?: string | undefined;
-}
-
-export interface FindAllUsersRequest {
-  nameFilter?: string | undefined;
+  password: string;
+  role: Role | undefined;
 }
 
 export const AUTH_PACKAGE_NAME = "auth";
@@ -178,6 +182,80 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
   },
 };
 
+function createBaseFindAllUsersRequest(): FindAllUsersRequest {
+  return {};
+}
+
+export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
+  encode(message: FindAllUsersRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.nameFilter !== undefined) {
+      writer.uint32(10).string(message.nameFilter);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FindAllUsersRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFindAllUsersRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.nameFilter = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
+function createBaseGetProfileRequest(): GetProfileRequest {
+  return { id: 0 };
+}
+
+export const GetProfileRequest: MessageFns<GetProfileRequest> = {
+  encode(message: GetProfileRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== 0) {
+      writer.uint32(8).int64(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetProfileRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetProfileRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.id = longToNumber(reader.int64());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
 function createBaseUserName(): UserName {
   return { firstName: "", lastName: "" };
 }
@@ -225,6 +303,65 @@ export const UserName: MessageFns<UserName> = {
           }
 
           message.middleName = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
+function createBaseRole(): Role {
+  return { id: 0, value: "", description: "" };
+}
+
+export const Role: MessageFns<Role> = {
+  encode(message: Role, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== 0) {
+      writer.uint32(8).int64(message.id);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    if (message.description !== "") {
+      writer.uint32(26).string(message.description);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Role {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRole();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.id = longToNumber(reader.int64());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.description = reader.string();
           continue;
         }
       }
@@ -312,7 +449,7 @@ export const UserListResponse: MessageFns<UserListResponse> = {
 };
 
 function createBaseUser(): User {
-  return { id: 0, firstName: "", lastName: "", email: "", roleId: 0 };
+  return { id: 0, firstName: "", lastName: "", email: "", password: "", role: undefined };
 }
 
 export const User: MessageFns<User> = {
@@ -332,8 +469,11 @@ export const User: MessageFns<User> = {
     if (message.email !== "") {
       writer.uint32(42).string(message.email);
     }
-    if (message.roleId !== 0) {
-      writer.uint32(48).uint32(message.roleId);
+    if (message.password !== "") {
+      writer.uint32(50).string(message.password);
+    }
+    if (message.role !== undefined) {
+      Role.encode(message.role, writer.uint32(58).fork()).join();
     }
     return writer;
   },
@@ -386,107 +526,19 @@ export const User: MessageFns<User> = {
           continue;
         }
         case 6: {
-          if (tag !== 48) {
+          if (tag !== 50) {
             break;
           }
 
-          message.roleId = reader.uint32();
+          message.password = reader.string();
           continue;
         }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-};
-
-function createBaseError(): Error {
-  return { message: "", code: 0 };
-}
-
-export const Error: MessageFns<Error> = {
-  encode(message: Error, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
-      writer.uint32(10).string(message.message);
-    }
-    if (message.code !== 0) {
-      writer.uint32(16).uint32(message.code);
-    }
-    if (message.stackTrace !== undefined) {
-      writer.uint32(26).string(message.stackTrace);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): Error {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseError();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
+        case 7: {
+          if (tag !== 58) {
             break;
           }
 
-          message.message = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-
-          message.code = reader.uint32();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.stackTrace = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-};
-
-function createBaseFindAllUsersRequest(): FindAllUsersRequest {
-  return {};
-}
-
-export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
-  encode(message: FindAllUsersRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.nameFilter !== undefined) {
-      writer.uint32(10).string(message.nameFilter);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): FindAllUsersRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFindAllUsersRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.nameFilter = reader.string();
+          message.role = Role.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -508,7 +560,7 @@ export interface AuthServiceClient {
 
   findAllUsers(request: FindAllUsersRequest, metadata: Metadata, ...rest: any): Observable<UserListResponse>;
 
-  getProfile(request: UInt32Value, metadata: Metadata, ...rest: any): Observable<User>;
+  getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Observable<User>;
 }
 
 /** Сервис аутентификации и управления пользователями */
@@ -532,7 +584,7 @@ export interface AuthServiceController {
     ...rest: any
   ): Promise<UserListResponse> | Observable<UserListResponse> | UserListResponse;
 
-  getProfile(request: UInt32Value, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
+  getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
 }
 
 export function AuthServiceControllerMethods() {
@@ -586,8 +638,8 @@ export const AuthServiceService = {
     path: "/auth.AuthService/GetProfile",
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: number | undefined) => Buffer.from(UInt32Value.encode({ value: value ?? 0 }).finish()),
-    requestDeserialize: (value: Buffer) => UInt32Value.decode(value).value,
+    requestSerialize: (value: GetProfileRequest) => Buffer.from(GetProfileRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetProfileRequest.decode(value),
     responseSerialize: (value: User) => Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer) => User.decode(value),
   },
@@ -597,7 +649,18 @@ export interface AuthServiceServer extends UntypedServiceImplementation {
   signIn: handleUnaryCall<SignInRequest, AuthResponse>;
   signUp: handleUnaryCall<SignUpRequest, AuthResponse>;
   findAllUsers: handleUnaryCall<FindAllUsersRequest, UserListResponse>;
-  getProfile: handleUnaryCall<number | undefined, User>;
+  getProfile: handleUnaryCall<GetProfileRequest, User>;
+}
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
 }
 
 export interface MessageFns<T> {

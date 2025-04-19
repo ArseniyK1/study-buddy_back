@@ -7,6 +7,7 @@ import {
   FindAllUsersRequest,
   SignInRequest,
   SignUpRequest,
+  User,
   UserListResponse,
 } from 'shared/generated/auth';
 import { RpcException } from '@nestjs/microservices';
@@ -59,11 +60,34 @@ export class AuthService {
     return !!user?.id ? user : null;
   }
 
-  async getProfile(id: number) {
+  async getProfile(id: number): Promise<User> {
     const user = await this.prisma.auth_user.findUnique({
       where: { id },
     });
-    return user;
+    if (user?.id) {
+      const role = await this.prisma.role.findUnique({
+        where: { id: +user?.role_id },
+      });
+      if (role?.id) {
+        return {
+          ...user,
+          firstName: user.first_name,
+          lastName: user.second_name,
+          middleName: user.middle_name || '',
+          role: role,
+        };
+      } else {
+        throw new RpcException({
+          code: Status.NOT_FOUND,
+          message: 'Роль пользователя не найдена!',
+        });
+      }
+    } else {
+      throw new RpcException({
+        code: Status.NOT_FOUND,
+        message: 'Пользователь не найден!',
+      });
+    }
   }
 
   async signUp(dto: SignUpRequest): Promise<AuthResponse> {
@@ -98,7 +122,7 @@ export class AuthService {
     };
   }
 
-  async findAllUsers(dto: FindAllUsersRequest): Promise<UserListResponse> {
+  async findAllUsers(dto: FindAllUsersRequest): Promise<any> {
     const users = await this.prisma.$queryRawTyped(
       getAllUsers(dto.nameFilter || '', 0, 100),
     );

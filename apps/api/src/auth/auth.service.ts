@@ -6,6 +6,7 @@ import {
   AuthResponse,
   UserListResponse,
   FindAllUsersRequest,
+  User,
 } from 'shared/generated/auth';
 import { SignUpDto } from './dto/sing-up.dto';
 import { handleRequest } from '../grpc/grpc.handle';
@@ -45,9 +46,7 @@ export class AuthService implements OnModuleInit {
     return await handleRequest(() => this.authService.FindAllUsers(dto));
   }
 
-  async getProfile(id: number) {
-    console.log(id);
-
+  async getProfile(id: number): Promise<User> {
     return await handleRequest(() => this.authService.GetProfile(id));
   }
 }

@@ -4,23 +4,25 @@ import { SignInDto } from './dto/sing-in.dto';
 import {
   AuthResponse,
   FindAllUsersRequest,
+  User,
   UserListResponse,
 } from 'shared/generated/auth';
 import { Public } from './guard/public.decorator';
 import { SignUpDto } from './dto/sing-up.dto';
+import { IRequest } from 'shared/interfaces/IRequest.interface';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('/signIn')
+  @Post('/sign-in')
   signIn(@Body() dto: SignInDto): Promise<AuthResponse> {
     return this.authService.signIn(dto);
   }
 
   @Public()
-  @Post('/signUp')
+  @Post('/sign-up')
   signUp(@Body() dto: SignUpDto): Promise<AuthResponse> {
     return this.authService.signUp(dto);
   }
@@ -31,7 +33,7 @@ export class AuthController {
   }
 
   @Post('profile')
-  getProfile(@Request() req: any) {
+  getProfile(@Request() req: IRequest): Promise<User> {
     return this.authService.getProfile(req.user.userId);
   }
 }

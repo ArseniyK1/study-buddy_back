@@ -63,7 +63,20 @@ export class AuthService {
     const user = await this.prisma.auth_user.findUnique({
       where: { id },
     });
-    return user;
+    if (!user) {
+      throw new RpcException({
+        code: Status.NOT_FOUND,
+        message: 'User not found',
+      });
+    }
+    return {
+      id: user.id,
+      firstName: user.first_name || '',
+      lastName: user.second_name || '',
+      middleName: user.middle_name || undefined,
+      email: user.email,
+      roleId: user.role_id,
+    };
   }
 
   async signUp(dto: SignUpRequest): Promise<AuthResponse> {

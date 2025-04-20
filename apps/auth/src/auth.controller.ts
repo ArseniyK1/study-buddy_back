@@ -37,17 +37,6 @@ export class AuthController implements AuthServiceController {
   async getProfile(id: UInt32Value): Promise<User> {
     console.log('Auth Micro', id.value);
 
-    const user = await this.authService.getProfile(id.value);
-    if (!user) {
-      throw new RpcException('User not found');
-    }
-    return {
-      id: user.id,
-      firstName: user.first_name || '',
-      lastName: user.second_name || '',
-      middleName: user.middle_name || undefined,
-      email: user.email,
-      roleId: user.role_id,
-    };
+    return await this.authService.getProfile(id.value);
   }
 }

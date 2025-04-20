@@ -61,11 +61,11 @@ export class AuthService {
     return !!user?.id ? user : null;
   }
 
-  async getProfile(data: GetProfileRequest): Promise<User | null> {
+  async getProfile(data: GetProfileRequest): Promise<any> {
     const user = await this.prisma.auth_user.findUnique({
       where: { id: data.user_id },
     });
-    return !!user?.id ? { ...user, middle_name: user.middle_name ?? '' } : null;
+    return !!user?.id ? { ...user, middle_name: user.middle_name || '' } : null;
   }
 
   async signUp(dto: SignUpRequest): Promise<AuthResponse> {

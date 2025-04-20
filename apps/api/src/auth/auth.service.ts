@@ -6,6 +6,7 @@ import {
   AuthResponse,
   UserListResponse,
   FindAllUsersRequest,
+  GetProfileRequest,
 } from 'shared/generated/auth';
 import { SignUpDto } from './dto/sing-up.dto';
 import { handleRequest } from '../grpc/grpc.handle';
@@ -17,7 +18,7 @@ interface AuthServiceClient {
   FindAllUsers(dto: FindAllUsersRequest): Observable<UserListResponse>;
   SignIn(dto: SignInDto): Observable<AuthResponse>;
   SignUp(dto: SignUpDto): Observable<AuthResponse>;
-  GetProfile(id: number): any;
+  GetProfile(dto: GetProfileRequest): any;
 }
 
 @Injectable()
@@ -46,8 +47,8 @@ export class AuthService implements OnModuleInit {
   }
 
   async getProfile(id: number) {
-    console.log(id);
-
-    return await handleRequest(() => this.authService.GetProfile(id));
+    return await handleRequest(() =>
+      this.authService.GetProfile({ user_id: id }),
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { PrismaClient, auth_user, role } from '@prisma/client';
+import { PrismaClient, User, Role } from '@prisma/client';
 import { genSalt, hash } from 'bcrypt';
 import * as dotenv from 'dotenv';
 
@@ -7,19 +7,20 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 const createUsers = async (quantity: number) => {
-  const users: auth_user[] = [];
+  const users: User[] = [];
   const salt = await genSalt(10); // С помощью библиотеки bycrypt создаём соль
   const hashPassword = await hash('test', salt); // bycrypt создаёт хеш пароля
 
   for (let i = 0; i < quantity; i++) {
-    const user = await prisma.auth_user.create({
+    const user = await prisma.user.create({
       data: {
-        first_name: faker.person.firstName(),
-        second_name: faker.person.lastName(),
-        middle_name: faker.person.middleName(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        middleName: faker.person.middleName(),
         password: hashPassword,
         email: faker.internet.email(),
-        role_id: faker.number.int({ min: 1, max: 3 }),
+        phone: faker.phone.number(),
+        roleId: faker.number.int({ min: 1, max: 3 }),
       },
     });
 
@@ -30,7 +31,7 @@ const createUsers = async (quantity: number) => {
 };
 
 const createRoles = async () => {
-  const roles: role[] = [];
+  const roles: Role[] = [];
   const roles_values = [
     {
       value: 'USER',

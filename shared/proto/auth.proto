@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // import "google/protobuf/empty.proto";
-import "google/protobuf/wrappers.proto";
+// import "google/protobuf/wrappers.proto";
 
 package auth;
 
@@ -10,7 +10,7 @@ service AuthService {
   rpc SignIn (SignInRequest) returns (AuthResponse) {}
   rpc SignUp (SignUpRequest) returns (AuthResponse) {}
   rpc FindAllUsers (FindAllUsersRequest) returns (UserListResponse) {}
-  rpc GetProfile (google.protobuf.UInt32Value) returns (User) {}
+  rpc GetProfile (GetProfileRequest) returns (User) {}
 }
 
 message SignInRequest {
@@ -23,6 +23,11 @@ message SignUpRequest {
   string password = 2;
   UserName name = 3;
   optional uint32 role_id = 4;
+  string phone = 5;
+}
+
+message GetProfileRequest {
+  uint64 id = 1;
 }
 
 message UserName {
@@ -45,7 +50,14 @@ message User {
   string last_name = 3;
   optional string middle_name = 4;
   string email = 5;
-  uint32 role_id = 6;
+  string phone = 6;
+  Role role = 7;
+}
+
+message Role {
+  uint32 id = 1;
+  string value = 2;
+  string description = 3;
 }
 
 message Error { 

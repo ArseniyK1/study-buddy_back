@@ -5,13 +5,16 @@
 // source: auth.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { type handleUnaryCall, Metadata, type UntypedServiceImplementation } from "@grpc/grpc-js";
-import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
-import { Observable } from "rxjs";
-import { UInt32Value } from "./google/protobuf/wrappers";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import {
+  type handleUnaryCall,
+  Metadata,
+  type UntypedServiceImplementation,
+} from '@grpc/grpc-js';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 
-export const protobufPackage = "auth";
+export const protobufPackage = 'auth';
 
 export interface SignInRequest {
   email: string;
@@ -23,6 +26,11 @@ export interface SignUpRequest {
   password: string;
   name: UserName | undefined;
   roleId?: number | undefined;
+  phone: string;
+}
+
+export interface GetProfileRequest {
+  id: number;
 }
 
 export interface UserName {
@@ -45,7 +53,14 @@ export interface User {
   lastName: string;
   middleName?: string | undefined;
   email: string;
-  roleId: number;
+  phone: string;
+  role: Role | undefined;
+}
+
+export interface Role {
+  id: number;
+  value: string;
+  description?: string;
 }
 
 export interface Error {
@@ -58,25 +73,29 @@ export interface FindAllUsersRequest {
   nameFilter?: string | undefined;
 }
 
-export const AUTH_PACKAGE_NAME = "auth";
+export const AUTH_PACKAGE_NAME = 'auth';
 
 function createBaseSignInRequest(): SignInRequest {
-  return { email: "", password: "" };
+  return { email: '', password: '' };
 }
 
 export const SignInRequest: MessageFns<SignInRequest> = {
-  encode(message: SignInRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.email !== "") {
+  encode(
+    message: SignInRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.email !== '') {
       writer.uint32(10).string(message.email);
     }
-    if (message.password !== "") {
+    if (message.password !== '') {
       writer.uint32(18).string(message.password);
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): SignInRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSignInRequest();
     while (reader.pos < end) {
@@ -109,15 +128,18 @@ export const SignInRequest: MessageFns<SignInRequest> = {
 };
 
 function createBaseSignUpRequest(): SignUpRequest {
-  return { email: "", password: "", name: undefined };
+  return { email: '', password: '', name: undefined, phone: '' };
 }
 
 export const SignUpRequest: MessageFns<SignUpRequest> = {
-  encode(message: SignUpRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.email !== "") {
+  encode(
+    message: SignUpRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.email !== '') {
       writer.uint32(10).string(message.email);
     }
-    if (message.password !== "") {
+    if (message.password !== '') {
       writer.uint32(18).string(message.password);
     }
     if (message.name !== undefined) {
@@ -126,11 +148,15 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
     if (message.roleId !== undefined) {
       writer.uint32(32).uint32(message.roleId);
     }
+    if (message.phone !== '') {
+      writer.uint32(42).string(message.phone);
+    }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): SignUpRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSignUpRequest();
     while (reader.pos < end) {
@@ -168,6 +194,55 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
           message.roleId = reader.uint32();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.phone = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
+function createBaseGetProfileRequest(): GetProfileRequest {
+  return { id: 0 };
+}
+
+export const GetProfileRequest: MessageFns<GetProfileRequest> = {
+  encode(
+    message: GetProfileRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.id !== 0) {
+      writer.uint32(8).uint64(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetProfileRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetProfileRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.id = longToNumber(reader.uint64());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -179,15 +254,18 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
 };
 
 function createBaseUserName(): UserName {
-  return { firstName: "", lastName: "" };
+  return { firstName: '', lastName: '' };
 }
 
 export const UserName: MessageFns<UserName> = {
-  encode(message: UserName, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.firstName !== "") {
+  encode(
+    message: UserName,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.firstName !== '') {
       writer.uint32(10).string(message.firstName);
     }
-    if (message.lastName !== "") {
+    if (message.lastName !== '') {
       writer.uint32(18).string(message.lastName);
     }
     if (message.middleName !== undefined) {
@@ -197,7 +275,8 @@ export const UserName: MessageFns<UserName> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): UserName {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUserName();
     while (reader.pos < end) {
@@ -238,19 +317,23 @@ export const UserName: MessageFns<UserName> = {
 };
 
 function createBaseAuthResponse(): AuthResponse {
-  return { accessToken: "" };
+  return { accessToken: '' };
 }
 
 export const AuthResponse: MessageFns<AuthResponse> = {
-  encode(message: AuthResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== "") {
+  encode(
+    message: AuthResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.accessToken !== '') {
       writer.uint32(10).string(message.accessToken);
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): AuthResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAuthResponse();
     while (reader.pos < end) {
@@ -279,7 +362,10 @@ function createBaseUserListResponse(): UserListResponse {
 }
 
 export const UserListResponse: MessageFns<UserListResponse> = {
-  encode(message: UserListResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: UserListResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     for (const v of message.users) {
       User.encode(v!, writer.uint32(10).fork()).join();
     }
@@ -287,7 +373,8 @@ export const UserListResponse: MessageFns<UserListResponse> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): UserListResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUserListResponse();
     while (reader.pos < end) {
@@ -312,34 +399,48 @@ export const UserListResponse: MessageFns<UserListResponse> = {
 };
 
 function createBaseUser(): User {
-  return { id: 0, firstName: "", lastName: "", email: "", roleId: 0 };
+  return {
+    id: 0,
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    role: undefined,
+  };
 }
 
 export const User: MessageFns<User> = {
-  encode(message: User, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: User,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== 0) {
       writer.uint32(8).uint32(message.id);
     }
-    if (message.firstName !== "") {
+    if (message.firstName !== '') {
       writer.uint32(18).string(message.firstName);
     }
-    if (message.lastName !== "") {
+    if (message.lastName !== '') {
       writer.uint32(26).string(message.lastName);
     }
     if (message.middleName !== undefined) {
       writer.uint32(34).string(message.middleName);
     }
-    if (message.email !== "") {
+    if (message.email !== '') {
       writer.uint32(42).string(message.email);
     }
-    if (message.roleId !== 0) {
-      writer.uint32(48).uint32(message.roleId);
+    if (message.phone !== '') {
+      writer.uint32(50).string(message.phone);
+    }
+    if (message.role !== undefined) {
+      Role.encode(message.role, writer.uint32(58).fork()).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): User {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUser();
     while (reader.pos < end) {
@@ -386,11 +487,82 @@ export const User: MessageFns<User> = {
           continue;
         }
         case 6: {
-          if (tag !== 48) {
+          if (tag !== 50) {
             break;
           }
 
-          message.roleId = reader.uint32();
+          message.phone = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.role = Role.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
+function createBaseRole(): Role {
+  return { id: 0, value: '', description: '' };
+}
+
+export const Role: MessageFns<Role> = {
+  encode(
+    message: Role,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.id !== 0) {
+      writer.uint32(8).uint32(message.id);
+    }
+    if (message.value !== '') {
+      writer.uint32(18).string(message.value);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(26).string(message.description);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Role {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRole();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.id = reader.uint32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.description = reader.string();
           continue;
         }
       }
@@ -404,12 +576,15 @@ export const User: MessageFns<User> = {
 };
 
 function createBaseError(): Error {
-  return { message: "", code: 0 };
+  return { message: '', code: 0 };
 }
 
 export const Error: MessageFns<Error> = {
-  encode(message: Error, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+  encode(
+    message: Error,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.message !== '') {
       writer.uint32(10).string(message.message);
     }
     if (message.code !== 0) {
@@ -422,7 +597,8 @@ export const Error: MessageFns<Error> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Error {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseError();
     while (reader.pos < end) {
@@ -467,15 +643,22 @@ function createBaseFindAllUsersRequest(): FindAllUsersRequest {
 }
 
 export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
-  encode(message: FindAllUsersRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: FindAllUsersRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.nameFilter !== undefined) {
       writer.uint32(10).string(message.nameFilter);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): FindAllUsersRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): FindAllUsersRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseFindAllUsersRequest();
     while (reader.pos < end) {
@@ -502,13 +685,29 @@ export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
 /** Сервис аутентификации и управления пользователями */
 
 export interface AuthServiceClient {
-  signIn(request: SignInRequest, metadata: Metadata, ...rest: any): Observable<AuthResponse>;
+  signIn(
+    request: SignInRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<AuthResponse>;
 
-  signUp(request: SignUpRequest, metadata: Metadata, ...rest: any): Observable<AuthResponse>;
+  signUp(
+    request: SignUpRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<AuthResponse>;
 
-  findAllUsers(request: FindAllUsersRequest, metadata: Metadata, ...rest: any): Observable<UserListResponse>;
+  findAllUsers(
+    request: FindAllUsersRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<UserListResponse>;
 
-  getProfile(request: UInt32Value, metadata: Metadata, ...rest: any): Observable<User>;
+  getProfile(
+    request: GetProfileRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<User>;
 }
 
 /** Сервис аутентификации и управления пользователями */
@@ -530,65 +729,99 @@ export interface AuthServiceController {
     request: FindAllUsersRequest,
     metadata: Metadata,
     ...rest: any
-  ): Promise<UserListResponse> | Observable<UserListResponse> | UserListResponse;
+  ):
+    | Promise<UserListResponse>
+    | Observable<UserListResponse>
+    | UserListResponse;
 
-  getProfile(request: UInt32Value, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
+  getProfile(
+    request: GetProfileRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<User> | Observable<User> | User;
 }
 
 export function AuthServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["signIn", "signUp", "findAllUsers", "getProfile"];
+    const grpcMethods: string[] = [
+      'signIn',
+      'signUp',
+      'findAllUsers',
+      'getProfile',
+    ];
     for (const method of grpcMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(
+        constructor.prototype,
+        method,
+      );
+      GrpcMethod('AuthService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(
+        constructor.prototype,
+        method,
+      );
+      GrpcStreamMethod('AuthService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
     }
   };
 }
 
-export const AUTH_SERVICE_NAME = "AuthService";
+export const AUTH_SERVICE_NAME = 'AuthService';
 
 /** Сервис аутентификации и управления пользователями */
 export type AuthServiceService = typeof AuthServiceService;
 export const AuthServiceService = {
   signIn: {
-    path: "/auth.AuthService/SignIn",
+    path: '/auth.AuthService/SignIn',
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: SignInRequest) => Buffer.from(SignInRequest.encode(value).finish()),
+    requestSerialize: (value: SignInRequest) =>
+      Buffer.from(SignInRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => SignInRequest.decode(value),
-    responseSerialize: (value: AuthResponse) => Buffer.from(AuthResponse.encode(value).finish()),
+    responseSerialize: (value: AuthResponse) =>
+      Buffer.from(AuthResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => AuthResponse.decode(value),
   },
   signUp: {
-    path: "/auth.AuthService/SignUp",
+    path: '/auth.AuthService/SignUp',
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: SignUpRequest) => Buffer.from(SignUpRequest.encode(value).finish()),
+    requestSerialize: (value: SignUpRequest) =>
+      Buffer.from(SignUpRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => SignUpRequest.decode(value),
-    responseSerialize: (value: AuthResponse) => Buffer.from(AuthResponse.encode(value).finish()),
+    responseSerialize: (value: AuthResponse) =>
+      Buffer.from(AuthResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => AuthResponse.decode(value),
   },
   findAllUsers: {
-    path: "/auth.AuthService/FindAllUsers",
+    path: '/auth.AuthService/FindAllUsers',
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: FindAllUsersRequest) => Buffer.from(FindAllUsersRequest.encode(value).finish()),
+    requestSerialize: (value: FindAllUsersRequest) =>
+      Buffer.from(FindAllUsersRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer) => FindAllUsersRequest.decode(value),
-    responseSerialize: (value: UserListResponse) => Buffer.from(UserListResponse.encode(value).finish()),
+    responseSerialize: (value: UserListResponse) =>
+      Buffer.from(UserListResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => UserListResponse.decode(value),
   },
   getProfile: {
-    path: "/auth.AuthService/GetProfile",
+    path: '/auth.AuthService/GetProfile',
     requestStream: false,
     responseStream: false,
-    requestSerialize: (value: number | undefined) => Buffer.from(UInt32Value.encode({ value: value ?? 0 }).finish()),
-    requestDeserialize: (value: Buffer) => UInt32Value.decode(value).value,
-    responseSerialize: (value: User) => Buffer.from(User.encode(value).finish()),
+    requestSerialize: (value: GetProfileRequest) =>
+      Buffer.from(GetProfileRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetProfileRequest.decode(value),
+    responseSerialize: (value: User) =>
+      Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer) => User.decode(value),
   },
 } as const;
@@ -597,7 +830,18 @@ export interface AuthServiceServer extends UntypedServiceImplementation {
   signIn: handleUnaryCall<SignInRequest, AuthResponse>;
   signUp: handleUnaryCall<SignUpRequest, AuthResponse>;
   findAllUsers: handleUnaryCall<FindAllUsersRequest, UserListResponse>;
-  getProfile: handleUnaryCall<number | undefined, User>;
+  getProfile: handleUnaryCall<GetProfileRequest, User>;
+}
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error('Value is larger than Number.MAX_SAFE_INTEGER');
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error('Value is smaller than Number.MIN_SAFE_INTEGER');
+  }
+  return num;
 }
 
 export interface MessageFns<T> {

@@ -5,9 +5,12 @@ import { PrismaService } from './prisma.service';
 import {
   AuthResponse,
   FindAllUsersRequest,
+  GetProfileRequest,
   SignInRequest,
   SignUpRequest,
+  User,
   UserListResponse,
+  Role,
 } from 'shared/generated/auth';
 import { RpcException } from '@nestjs/microservices';
 import { Status } from '@grpc/grpc-js/build/src/constants';
@@ -39,7 +42,7 @@ export class AuthService {
       });
     }
     const role = await this.prisma.role.findUnique({
-      where: { id: +user.role_id },
+      where: { id: +user.roleId },
     });
     const payload = {
       userId: user.id,
@@ -52,30 +55,32 @@ export class AuthService {
   }
 
   async findOne(email: string) {
-    const user = await this.prisma.auth_user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     return !!user?.id ? user : null;
   }
 
-  async getProfile(id: number) {
-    const user = await this.prisma.auth_user.findUnique({
-      where: { id },
+  async getProfile(data: GetProfileRequest): Promise<User> {
+    console.log('id', data);
+    const user = await this.prisma.user.findUnique({
+      where: { id: +data.id },
+      include: {
+        role: true,
+      },
     });
+    console.log('user', user);
     if (!user) {
       throw new RpcException({
         code: Status.NOT_FOUND,
-        message: 'User not found',
+        message: 'Пользователь не найден!',
       });
     }
     return {
-      id: user.id,
-      firstName: user.first_name || '',
-      lastName: user.second_name || '',
-      middleName: user.middle_name || undefined,
-      email: user.email,
-      roleId: user.role_id,
+      ...user,
+      middleName: user.middleName || undefined,
+      role: user.role as unknown as Role,
     };
   }
 
@@ -89,21 +94,22 @@ export class AuthService {
     }
     const salt = await genSalt(10);
     const hashPassword = await hash(dto.password, salt); // bycrypt создаёт хеш пароля
-    const newUser = await this.prisma.auth_user.create({
+    const newUser = await this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashPassword,
-        first_name: dto.name?.firstName || '',
-        second_name: dto.name?.lastName || '',
-        middle_name: dto.name?.middleName,
-        role_id: 1,
+        firstName: dto.name?.firstName || '',
+        lastName: dto.name?.lastName || '',
+        middleName: dto.name?.middleName,
+        phone: dto.phone,
+        roleId: 1,
       },
     });
 
     const payload = {
       userId: newUser.id,
       username: newUser.email,
-      role: newUser.role_id,
+      role: newUser.roleId,
     };
 
     return {
@@ -121,9 +127,10 @@ export class AuthService {
         id: user.id,
         email: user.email,
         firstName: user.first_name || '',
-        lastName: user.second_name || '',
+        lastName: user.last_name || '',
         middleName: user.middle_name || undefined,
-        roleId: user.role_id,
+        phone: user.phone,
+        role: user.role as unknown as Role,
       })),
     };
   }

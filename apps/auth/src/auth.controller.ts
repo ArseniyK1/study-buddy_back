@@ -6,12 +6,12 @@ import {
   AuthResponse,
   AuthServiceController,
   FindAllUsersRequest,
+  GetProfileRequest,
   SignInRequest,
   SignUpRequest,
   User,
   UserListResponse,
 } from 'shared/generated/auth';
-import { UInt32Value } from 'shared/generated/google/protobuf/wrappers';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,9 +34,7 @@ export class AuthController implements AuthServiceController {
   }
 
   @GrpcMethod('AuthService', 'GetProfile')
-  async getProfile(id: UInt32Value): Promise<User> {
-    console.log('Auth Micro', id.value);
-
-    return await this.authService.getProfile(id.value);
+  async getProfile(data: GetProfileRequest): Promise<User> {
+    return await this.authService.getProfile(data);
   }
 }

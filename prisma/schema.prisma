@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["typedSql"]
 }
 
@@ -14,27 +8,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id         Int         @id @default(autoincrement())
+  email      String      @unique
+  firstName  String      @map("first_name")
+  lastName   String      @map("last_name")
+  middleName String?     @map("middle_name")
+  phone      String      @map("phone")
+  password   String
+  roleId     Int         @map("role_id")
+  bookings   Booking[]
+  role       Role        @relation(fields: [roleId], references: [id])
+  workspaces Workspace[]
 
-model auth_user {
-  id          Int     @id @default(autoincrement())
-  email       String  @unique
-  first_name  String?
-  second_name String?
-  middle_name String?
-  password    String
-
-  role    role @relation(fields: [role_id], references: [id])
-  role_id Int
-
-  // Составной уникальный индекс на email + role_id
-  @@unique([role_id, email], name: "auth_user_email_role_id_unique")
+  @@map("user")
 }
 
-model role {
-  id Int @id @default(autoincrement())
+model Role {
+  id          Int     @id @default(autoincrement())
+  value       String  @unique
+  description String?
+  users       User[]
 
-  value       String
-  description String
+  @@map("role")
+}
 
-  users auth_user[]
+model Workspace {
+  id          Int             @id @default(autoincrement())
+  name        String
+  address     String
+  description String?
+  capacity    Int
+  amenities   String?
+  ownerId     Int             @map("owner_id")
+  owner       User            @relation(fields: [ownerId], references: [id])
+  zones       WorkspaceZone[]
+
+  @@map("workspace")
+}
+
+model WorkspaceZone {
+  id           Int       @id @default(autoincrement())
+  name         String
+  description  String?
+  pricePerHour Float     @map("price_per_hour")
+  maxPlaces    Int       @map("max_places")
+  workspaceId  Int       @map("workspace_id")
+  places       Place[]
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@map("workspace_zone")
+}
+
+model Place {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String?
+  status      String
+  zoneId      Int?           @map("zone_id")
+  bookings    Booking[]
+  zone        WorkspaceZone? @relation(fields: [zoneId], references: [id])
+
+  @@map("place")
+}
+
+model Booking {
+  id         Int      @id @default(autoincrement())
+  startTime  DateTime @map("start_time")
+  endTime    DateTime @map("end_time")
+  status     String
+  totalPrice Float    @map("total_price")
+  userId     Int      @map("user_id")
+  placeId    Int      @map("place_id")
+  place      Place    @relation(fields: [placeId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("booking")
 }

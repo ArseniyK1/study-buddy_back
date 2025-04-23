@@ -1,14 +1,15 @@
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { RpcException } from '@nestjs/microservices';
-import { catchError, firstValueFrom, Observable } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom, Observable } from 'rxjs';
 
 export async function handleRequest<T>(
   request: () => Observable<T>,
 ): Promise<T> {
   try {
-    return await firstValueFrom(
+    return await lastValueFrom(
       request().pipe(
         catchError((error) => {
+          console.error('GRPC error:', error);
           throw new RpcException({
             code: error.code || Status.INTERNAL,
             message: error.message || 'Internal server error',
@@ -17,6 +18,7 @@ export async function handleRequest<T>(
       ),
     );
   } catch (error) {
+    console.error('Request error:', error);
     throw error;
   }
 }

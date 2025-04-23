@@ -1,3 +1,6 @@
+-- @param {String} $1:search - search query
+-- @param {Int} $2:offset - offset
+-- @param {Int} $3:limit - limit
 SELECT a.*,
     json_build_object(
         'id',

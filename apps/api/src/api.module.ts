@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    LoggerModule,
   ],
   providers: [
     {

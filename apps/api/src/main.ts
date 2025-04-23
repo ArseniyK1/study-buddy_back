@@ -4,9 +4,17 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GrpcExceptionFilter } from './grpc/grpc-exception.filter';
+import { LoggerService } from './logger/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(ApiModule);
+  const app = await NestFactory.create(ApiModule, {
+    bufferLogs: true,
+  });
+
+  // Set up the logger
+  // const logger = await app.resolve(LoggerService);
+  // app.useLogger(logger);
+
   // app.connectMicroservice<MicroserviceOptions>(grpcClientOptions);
 
   // await app.startAllMicroservices();
@@ -29,6 +37,6 @@ async function bootstrap() {
   SwaggerModule.setup('/api-docs', app, document);
 
   await app.listen(port);
-  console.log(`Server started on port ${await app.getUrl()}`);
+  // logger.log(`Server started on port ${await app.getUrl()}`);
 }
 bootstrap();

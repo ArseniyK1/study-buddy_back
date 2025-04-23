@@ -30,10 +30,10 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
   controllers: [AuthController],
   providers: [
     AuthService,
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: TokenInterceptor,
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TokenInterceptor,
+    },
   ],
 })
 export class AuthModule {}

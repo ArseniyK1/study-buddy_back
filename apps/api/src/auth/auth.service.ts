@@ -1,28 +1,22 @@
-import { SignInDto } from './dto/sing-in.dto';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   AuthResponse,
   UserListResponse,
   FindAllUsersRequest,
+  AuthServiceClient,
+  SignInRequest,
+  SignUpRequest,
   GetProfileRequest,
+  User,
 } from 'shared/generated/auth';
-import { SignUpDto } from './dto/sing-up.dto';
-import { handleRequest } from '../grpc/grpc.handle';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CacheResponse } from '../decorators/cache.decorator';
-
-interface AuthServiceClient {
-  FindAllUsers(dto: FindAllUsersRequest): Observable<UserListResponse>;
-  SignIn(dto: SignInDto): Observable<AuthResponse>;
-  SignUp(dto: SignUpDto): Observable<AuthResponse>;
-  GetProfile(dto: GetProfileRequest): any;
-}
+import { Metadata } from '@grpc/grpc-js';
+import { Observable } from 'rxjs';
 
 @Injectable()
-export class AuthService implements OnModuleInit {
+export class AuthService implements OnModuleInit, AuthServiceClient {
   constructor(
     @Inject('GRPC_SERVICE') private client: ClientGrpc,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -33,20 +27,38 @@ export class AuthService implements OnModuleInit {
     this.authService = this.client.getService<AuthServiceClient>('AuthService');
   }
 
-  async signIn(dto: SignInDto): Promise<AuthResponse> {
-    return await handleRequest(() => this.authService.SignIn(dto));
+  signIn(
+    request: SignInRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<AuthResponse> {
+    return this.authService.signIn(request, metadata);
   }
 
-  async signUp(dto: SignUpDto): Promise<AuthResponse> {
-    return handleRequest(() => this.authService.SignUp(dto));
+  signUp(
+    request: SignUpRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<AuthResponse> {
+    return this.authService.signUp(request, metadata);
   }
 
-  @CacheResponse(600)
-  async findAllUsers(dto: FindAllUsersRequest): Promise<UserListResponse> {
-    return await handleRequest(() => this.authService.FindAllUsers(dto));
+  findAllUsers(
+    request: FindAllUsersRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<UserListResponse> {
+    return this.authService.findAllUsers(request, metadata);
   }
 
-  async getProfile(id: number) {
-    return await handleRequest(() => this.authService.GetProfile({ id }));
+  getProfile(
+    request: GetProfileRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<User> {
+    return this.authService.getProfile(request, metadata);
+  }
+
+  refreshToken(
+    request: { refreshToken: string },
+    metadata: Metadata = new Metadata(),
+  ): Observable<AuthResponse> {
+    return this.authService.refreshToken(request, metadata);
   }
 }

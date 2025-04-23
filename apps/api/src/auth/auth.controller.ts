@@ -8,25 +8,25 @@ import {
 } from 'shared/generated/auth';
 import { Public } from './guard/public.decorator';
 import { SignUpDto } from './dto/sing-up.dto';
-
+import { Observable } from 'rxjs';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('sign-in')
-  signIn(@Body() dto: SignInDto): Promise<AuthResponse> {
+  signIn(@Body() dto: SignInDto): Observable<AuthResponse> {
     return this.authService.signIn(dto);
   }
 
   @Public()
   @Post('sign-up')
-  signUp(@Body() dto: SignUpDto): Promise<AuthResponse> {
+  signUp(@Body() dto: SignUpDto): Observable<AuthResponse> {
     return this.authService.signUp(dto);
   }
 
   @Post('all-users')
-  findAllUsers(@Body() dto: FindAllUsersRequest): Promise<UserListResponse> {
+  findAllUsers(@Body() dto: FindAllUsersRequest): Observable<UserListResponse> {
     return this.authService.findAllUsers(dto);
   }
 

@@ -9,6 +9,7 @@ package auth;
 service AuthService {
   rpc SignIn (SignInRequest) returns (AuthResponse) {}
   rpc SignUp (SignUpRequest) returns (AuthResponse) {}
+  rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse) {}
   rpc FindAllUsers (FindAllUsersRequest) returns (UserListResponse) {}
   rpc GetProfile (GetProfileRequest) returns (User) {}
 }
@@ -30,6 +31,15 @@ message GetProfileRequest {
   uint64 id = 1;
 }
 
+message FindAllUsersRequest {
+  optional string name_filter = 1;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+
 message UserName {
   string first_name = 1;
   string last_name = 2;
@@ -38,6 +48,7 @@ message UserName {
 
 message AuthResponse {
   string access_token = 1;
+  string refresh_token = 2;
 }
 
 message UserListResponse {
@@ -58,14 +69,4 @@ message Role {
   uint32 id = 1;
   string value = 2;
   string description = 3;
-}
-
-message Error { 
-  string message = 1;
-  uint32 code = 2;     
-  optional string stack_trace = 3;
-}
-
-message FindAllUsersRequest {
-  optional string name_filter = 1;
 }

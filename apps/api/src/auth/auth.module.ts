@@ -4,6 +4,8 @@ import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { TokenInterceptor } from './interceptors/token.interceptor';
 
 @Module({
   imports: [
@@ -26,6 +28,12 @@ import { CacheModule } from '@nestjs/cache-manager';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: TokenInterceptor,
+    // },
+  ],
 })
 export class AuthModule {}

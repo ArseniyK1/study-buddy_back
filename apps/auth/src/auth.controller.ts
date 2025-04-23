@@ -1,12 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
-import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { GrpcMethod } from '@nestjs/microservices';
 import {
   AuthResponse,
   AuthServiceController,
   FindAllUsersRequest,
   GetProfileRequest,
+  RefreshTokenRequest,
   SignInRequest,
   SignUpRequest,
   User,
@@ -36,5 +37,10 @@ export class AuthController implements AuthServiceController {
   @GrpcMethod('AuthService', 'GetProfile')
   async getProfile(data: GetProfileRequest): Promise<User> {
     return await this.authService.getProfile(data);
+  }
+
+  @GrpcMethod('AuthService', 'RefreshToken')
+  async refreshToken(data: RefreshTokenRequest): Promise<AuthResponse> {
+    return await this.authService.refreshToken(data.refreshToken);
   }
 }

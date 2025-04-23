@@ -50,7 +50,12 @@ export class AuthService {
       role: role?.value,
     };
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '2h',
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '30d',
+      }),
     };
   }
 
@@ -113,7 +118,12 @@ export class AuthService {
     };
 
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '60s',
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '30d',
+      }),
     };
   }
 
@@ -133,5 +143,42 @@ export class AuthService {
         role: user.role as unknown as Role,
       })),
     };
+  }
+
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: { role: true },
+      });
+
+      if (!user) {
+        throw new RpcException({
+          code: Status.NOT_FOUND,
+          message: 'Пользователь не найден!',
+        });
+      }
+
+      const newPayload = {
+        userId: user.id,
+        username: user.email,
+        role: user.role.value,
+      };
+
+      return {
+        accessToken: await this.jwtService.signAsync(newPayload, {
+          expiresIn: '60s',
+        }),
+        refreshToken: await this.jwtService.signAsync(newPayload, {
+          expiresIn: '30d',
+        }),
+      };
+    } catch {
+      throw new RpcException({
+        code: Status.UNAUTHENTICATED,
+        message: 'Недействительный refresh token!',
+      });
+    }
   }
 }

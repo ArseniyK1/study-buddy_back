@@ -10,6 +10,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { ClientGrpc } from '@nestjs/microservices';
 import { AuthServiceClient } from 'shared/generated/auth';
 import { Metadata } from '@grpc/grpc-js';
+import { handleRequest } from '../../grpc/grpc.handle';
 
 @Injectable()
 export class TokenInterceptor implements NestInterceptor {
@@ -38,10 +39,11 @@ export class TokenInterceptor implements NestInterceptor {
       catchError((error) => {
         if (error.status === 401 && refreshToken) {
           console.log('Attempting to refresh token with:', refreshToken);
-          return this.authService
-            .refreshToken({ refreshToken }, new Metadata())
-            .pipe(
-              switchMap((response) => {
+          return new Observable((subscriber) => {
+            handleRequest(() =>
+              this.authService.refreshToken({ refreshToken }, new Metadata()),
+            )
+              .then((response) => {
                 console.log('Token refresh successful');
                 // Обновляем access token в заголовке
                 request.headers.authorization = `Bearer ${response.accessToken}`;
@@ -51,13 +53,17 @@ export class TokenInterceptor implements NestInterceptor {
                   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
                 });
                 // Повторяем оригинальный запрос с новым токеном
-                return next.handle();
-              }),
-              catchError((refreshError) => {
+                next.handle().subscribe({
+                  next: (value) => subscriber.next(value),
+                  error: (err) => subscriber.error(err),
+                  complete: () => subscriber.complete(),
+                });
+              })
+              .catch((refreshError) => {
                 console.error('Token refresh failed:', refreshError);
-                return throwError(() => refreshError);
-              }),
-            );
+                subscriber.error(refreshError);
+              });
+          });
         }
         return throwError(() => error);
       }),

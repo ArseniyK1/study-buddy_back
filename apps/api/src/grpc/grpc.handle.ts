@@ -1,12 +1,12 @@
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { RpcException } from '@nestjs/microservices';
-import { catchError, firstValueFrom, Observable } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom, Observable } from 'rxjs';
 
 export async function handleRequest<T>(
   request: () => Observable<T>,
 ): Promise<T> {
   try {
-    return await firstValueFrom(
+    return await lastValueFrom(
       request().pipe(
         catchError((error) => {
           throw new RpcException({

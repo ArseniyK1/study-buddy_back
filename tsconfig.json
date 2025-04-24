@@ -18,7 +18,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@app/api/*": ["apps/api/src/*"],
-      "@app/auth/*": ["apps/auth/src/*"]
+      "@app/auth/*": ["apps/auth/src/*"],
+      "@prisma/*": ["prisma/*"]
     }
   }
 }

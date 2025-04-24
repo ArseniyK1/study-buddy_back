@@ -13,14 +13,12 @@ export class PrismaLoggerMiddleware {
   handleQuery(event: any) {
     const { query, params, duration } = event;
 
-    // Логируем запрос с цветным форматированием
     this.logger.logDatabaseQuery(
       query,
       params ? JSON.parse(params) : [],
       chalk.magenta('Prisma:Query'),
     );
 
-    // Дополнительно логируем время выполнения с цветным форматированием
     this.logger.log(
       chalk.magenta(
         `[${new Date().toISOString()}] Prisma query completed in ${duration}ms`,

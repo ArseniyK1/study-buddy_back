@@ -45,7 +45,6 @@ export class LoggerService extends ConsoleLogger {
     const paramCount = params ? params.length : 0;
     const paramValues = params ? JSON.stringify(params) : '[]';
 
-    // Используем цветное форматирование, если context уже содержит цветные символы
     const formattedContext =
       context && context.includes('\u001b')
         ? context
@@ -57,14 +56,12 @@ export class LoggerService extends ConsoleLogger {
   }
 
   private getClientIp(request: Request): string {
-    // Try to get IP from various headers
     const ip =
       request.headers['x-forwarded-for'] ||
       request.headers['x-real-ip'] ||
       request.socket.remoteAddress ||
       'Unknown';
 
-    // If it's an array, take the first IP
     return Array.isArray(ip) ? ip[0] : ip;
   }
 }

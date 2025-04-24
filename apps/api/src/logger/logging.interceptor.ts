@@ -26,14 +26,12 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const { method, url } = request;
 
-    // Log the incoming request
     this.logger.logRequest(request, 'Request');
 
     const now = Date.now();
 
     return next.handle().pipe(
       tap(() => {
-        // Log the response time
         const responseTime = Date.now() - now;
         this.logger.log(
           chalk.blue(
@@ -43,7 +41,6 @@ export class LoggingInterceptor implements NestInterceptor {
         );
       }),
       catchError((error) => {
-        // Log any errors
         this.logger.logError(error, request, 'Error');
         throw error;
       }),

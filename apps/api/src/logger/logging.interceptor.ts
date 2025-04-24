@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { LoggerService } from './logger.service';
 import { Request } from 'express';
+import * as chalk from 'chalk';
 
 // Extend the Express Request type to include the user property
 interface RequestWithUser extends Request {
@@ -35,7 +36,9 @@ export class LoggingInterceptor implements NestInterceptor {
         // Log the response time
         const responseTime = Date.now() - now;
         this.logger.log(
-          `[${new Date().toISOString()}] ${method} ${url} completed in ${responseTime}ms`,
+          chalk.blue(
+            `[${new Date().toISOString()}] ${method} ${url} completed in ${responseTime}ms`,
+          ),
           'Response',
         );
       }),

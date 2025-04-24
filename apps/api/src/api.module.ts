@@ -5,6 +5,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { LoggerModule } from './logger/logger.module';
+import { WorkplaceModule } from './workplace/workplace.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { LoggerModule } from './logger/logger.module';
       isGlobal: true,
     }),
     LoggerModule,
+    WorkplaceModule,
+    PrismaModule,
   ],
   providers: [
     {

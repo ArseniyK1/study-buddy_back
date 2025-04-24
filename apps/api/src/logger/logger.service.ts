@@ -1,5 +1,6 @@
 import { Injectable, ConsoleLogger, Scope } from '@nestjs/common';
 import { Request } from 'express';
+import * as chalk from 'chalk';
 
 // Extend the Express Request type to include the user property
 interface RequestWithUser extends Request {
@@ -39,12 +40,27 @@ export class LoggerService extends ConsoleLogger {
     this.error(logMessage, errorStack, context);
   }
 
+  logDatabaseQuery(query: string, params: any[], context?: string) {
+    const timestamp = new Date().toISOString();
+    const paramCount = params ? params.length : 0;
+    const paramValues = params ? JSON.stringify(params) : '[]';
+
+    // Используем цветное форматирование, если context уже содержит цветные символы
+    const formattedContext =
+      context && context.includes('\u001b')
+        ? context
+        : chalk.cyan(context || 'Database');
+
+    const logMessage = `[${timestamp}] Выполнен запрос к БД: ${query} | params=${paramCount}, values: ${paramValues}`;
+
+    this.log(logMessage, formattedContext);
+  }
+
   private getClientIp(request: Request): string {
     // Try to get IP from various headers
     const ip =
       request.headers['x-forwarded-for'] ||
       request.headers['x-real-ip'] ||
-      request.connection.remoteAddress ||
       request.socket.remoteAddress ||
       'Unknown';
 

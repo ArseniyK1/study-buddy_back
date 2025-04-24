@@ -9,7 +9,6 @@ export async function handleRequest<T>(
     return await lastValueFrom(
       request().pipe(
         catchError((error) => {
-          console.error('GRPC error:', error);
           throw new RpcException({
             code: error.code || Status.INTERNAL,
             message: error.message || 'Internal server error',
@@ -18,7 +17,6 @@ export async function handleRequest<T>(
       ),
     );
   } catch (error) {
-    console.error('Request error:', error);
     throw error;
   }
 }

@@ -12,8 +12,8 @@ async function bootstrap() {
   });
 
   // Set up the logger
-  // const logger = await app.resolve(LoggerService);
-  // app.useLogger(logger);
+  const logger = await app.resolve(LoggerService);
+  app.useLogger(logger);
 
   // app.connectMicroservice<MicroserviceOptions>(grpcClientOptions);
 
@@ -37,6 +37,6 @@ async function bootstrap() {
   SwaggerModule.setup('/api-docs', app, document);
 
   await app.listen(port);
-  // logger.log(`Server started on port ${await app.getUrl()}`);
+  logger.warn(`Server started on port ${await app.getUrl()}`);
 }
 bootstrap();

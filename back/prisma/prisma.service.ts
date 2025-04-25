@@ -35,6 +35,7 @@ export class PrismaService
     this.$extends({
       query: {
         $allOperations({ operation, model, args, query }) {
+          console.log(operation, model, args, query);
           return this.prismaSoftDeleteMiddleware.handle(
             { model, action: operation, args },
             (params: Prisma.MiddlewareParams) => query(params),

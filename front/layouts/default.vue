@@ -2,7 +2,7 @@
   <div class="flex h-full">
     <!-- Navigation Drawer -->
     <div
-      class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out z-30"
+      class="fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-30"
       :class="{ 'translate-x-0': isDrawerOpen }"
     >
       <div class="h-full w-64 bg-white shadow-lg flex flex-col">
@@ -36,7 +36,7 @@
                   class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <component :is="item.icon" class="h-5 w-5 mr-3" />
-                  {{ item.name }}
+                  {{ item.name }}asd
                 </NuxtLink>
               </li>
             </ul>
@@ -94,7 +94,7 @@
     ></div>
 
     <!-- Main Content -->
-    <div class="flex-1 md:ml-64">
+    <div class="flex-1">
       <div class="min-h-screen bg-gray-50">
         <!-- Header -->
         <header class="bg-white shadow">

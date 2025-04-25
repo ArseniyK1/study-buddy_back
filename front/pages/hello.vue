@@ -61,7 +61,7 @@
 <script setup lang="ts">
 const router = useRouter();
 const authStore = useAuthStore();
-const user = computed(() => authStore.user);
+const user = authStore.getProfileComputed;
 
 const handleLogout = () => {
   authStore.logout();

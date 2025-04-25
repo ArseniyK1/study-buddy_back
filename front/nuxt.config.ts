@@ -23,6 +23,6 @@ export default defineNuxtConfig({
       ],
     },
   },
-
+  plugins: ["~/plugins/auth.client.ts"],
   compatibilityDate: "2025-04-25",
 });

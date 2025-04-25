@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { LoggerModule } from './logger/logger.module';
 import { WorkplaceModule } from './workplace/workplace.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { WorkspaceZoneModule } from './workspace-zone/workspace-zone.module';
+import { WorkspaceModule } from './workspace/workspace.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { PrismaModule } from './prisma/prisma.module';
     LoggerModule,
     WorkplaceModule,
     PrismaModule,
+    WorkspaceZoneModule,
+    WorkspaceModule,
   ],
   providers: [
     {

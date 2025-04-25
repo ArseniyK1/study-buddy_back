@@ -40,6 +40,7 @@ model Workspace {
   description String?
   capacity    Int
   amenities   String?
+  approved    Boolean         @default(false)
   ownerId     Int             @map("owner_id")
   owner       User            @relation(fields: [ownerId], references: [id])
   zones       WorkspaceZone[]

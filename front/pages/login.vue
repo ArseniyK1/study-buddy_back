@@ -81,7 +81,8 @@ definePageMeta({
 
 const router = useRouter();
 const authStore = useAuthStore();
-const email = ref("Celine.Ullrich23@gmail.com");
+// const email = ref("Celine.Ullrich23@gmail.com");
+const email = ref("Maximillia31@gmail.com");
 const password = ref("test");
 const loading = ref(false);
 const error = ref("");

@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Инициализируем store
   await authStore.initialize();
 
-  const publicRoutes = ["/login", "/register", "/"];
+  const publicRoutes = ["/login", "/register"];
   const isPublicRoute = publicRoutes.includes(to.path);
 
   // Разрешаем доступ к публичным маршрутам

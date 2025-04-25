@@ -31,6 +31,18 @@ async function bootstrap() {
     .setTitle('Диплом Дмитрий Соболев')
     .setDescription('Документаци по API GATEWAY')
     .setVersion('0.0.1')
+    .addSecurityRequirements('JWT-auth')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controller!
+    )
     .addTag('Dmitriy Sobolev')
     .build();
   const document = SwaggerModule.createDocument(app, configSwagger);

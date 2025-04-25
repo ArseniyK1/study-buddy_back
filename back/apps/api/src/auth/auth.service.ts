@@ -59,6 +59,7 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     request: GetProfileRequest,
     metadata: Metadata = new Metadata(),
   ): Observable<User> {
+    console.log('request', request);
     return from(
       handleRequest(() => this.authService.getProfile(request, metadata)),
     );
@@ -68,6 +69,7 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     request: { refreshToken: string },
     metadata: Metadata = new Metadata(),
   ): Observable<AuthResponse> {
+    console.log('request', JSON.stringify(request));
     return from(
       handleRequest(() => this.authService.refreshToken(request, metadata)),
     );

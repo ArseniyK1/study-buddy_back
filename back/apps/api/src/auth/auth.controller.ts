@@ -32,6 +32,6 @@ export class AuthController {
 
   @Post('profile')
   getProfile(@Request() req: any) {
-    return this.authService.getProfile(req.user.userId);
+    return this.authService.getProfile({ id: req.user.userId });
   }
 }

@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "command": "cd back; concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --prefix \"[{name}]\" --names \"API,AUTH\" \"cross-env NODE_ENV=development nest start api --watch\" \"nest start auth --watch\"",
+      "problemMatcher": [],
+      "label": "Start Backend",
+      "detail": "Start both API and Auth services"
+    },
+    {
+      "type": "shell",
+      "command": "cd front; npm run dev",
+      "problemMatcher": [],
+      "label": "Start Frontend",
+      "detail": "Start the frontend development server"
+    },
+    {
+      "label": "Start All",
+      "dependsOn": ["Start Backend", "Start Frontend"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

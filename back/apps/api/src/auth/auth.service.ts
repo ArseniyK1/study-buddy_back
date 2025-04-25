@@ -14,7 +14,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Metadata } from '@grpc/grpc-js';
 import { from, Observable } from 'rxjs';
-import { handleRequest } from '../grpc/grpc.handle';
+import { handleRequest } from '../common/grpc/grpc.handle';
 
 @Injectable()
 export class AuthService implements OnModuleInit, AuthServiceClient {

@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { JwtService } from '@nestjs/jwt';
-import { LoggerModule } from './logger/logger.module';
+import { LoggerModule } from './common/logger/logger.module';
 import { WorkplaceModule } from './workplace/workplace.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { WorkspaceZoneModule } from './workspace-zone/workspace-zone.module';

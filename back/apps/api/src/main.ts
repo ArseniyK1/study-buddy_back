@@ -3,8 +3,8 @@ import { ApiModule } from './api.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { GrpcExceptionFilter } from './grpc/grpc-exception.filter';
-import { LoggerService } from './logger/logger.service';
+import { GrpcExceptionFilter } from './common/grpc/grpc-exception.filter';
+import { LoggerService } from './common/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiModule, {

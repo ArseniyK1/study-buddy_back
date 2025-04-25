@@ -10,7 +10,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { ClientGrpc } from '@nestjs/microservices';
 import { AuthServiceClient } from 'shared/generated/auth';
 import { Metadata } from '@grpc/grpc-js';
-import { handleRequest } from '../../grpc/grpc.handle';
+import { handleRequest } from '../../common/grpc/grpc.handle';
 
 @Injectable()
 export class TokenInterceptor implements NestInterceptor {

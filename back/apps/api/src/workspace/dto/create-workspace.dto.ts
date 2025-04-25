@@ -1,30 +1,49 @@
 import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { faker } from '@faker-js/faker';
 
 export class CreateWorkspaceDto {
-  @ApiProperty({ description: 'Name of the workspace' })
+  @ApiProperty({
+    description: 'Название рабочего пространства',
+    example: faker.company.name(),
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Physical address of the workspace' })
+  @ApiProperty({
+    description: 'Физический адрес рабочего пространства',
+    example: faker.location.streetAddress(),
+  })
   @IsString()
   address: string;
 
-  @ApiPropertyOptional({ description: 'Description of the workspace' })
+  @ApiPropertyOptional({
+    description: 'Описание рабочего пространства',
+    example: faker.lorem.paragraph(),
+  })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ description: 'Maximum capacity of the workspace' })
+  @ApiProperty({
+    description: 'Максимальная вместимость рабочего пространства',
+    example: faker.number.int({ min: 10, max: 100 }),
+  })
   @IsNumber()
   capacity: number;
 
-  @ApiPropertyOptional({ description: 'Available amenities in the workspace' })
+  @ApiPropertyOptional({
+    description: 'Доступные удобства в рабочем пространстве',
+    example: faker.lorem.words(5),
+  })
   @IsString()
   @IsOptional()
   amenities?: string;
 
-  @ApiProperty({ description: 'ID of the workspace owner' })
+  @ApiProperty({
+    description: 'ID владельца рабочего пространства',
+    example: faker.number.int({ min: 1, max: 100 }),
+  })
   @IsNumber()
   ownerId: number;
 }

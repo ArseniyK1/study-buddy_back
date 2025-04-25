@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaLoggerMiddleware } from './prisma-logger.middleware';
+import { PrismaSoftDeleteMiddleware } from './prisma-soft-delete.middleware';
 import { LoggerService } from '@app/api/common/logger/logger.service';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private prismaLoggerMiddleware: PrismaLoggerMiddleware;
+  private prismaSoftDeleteMiddleware: PrismaSoftDeleteMiddleware;
 
   constructor(private readonly logger: LoggerService) {
     super({
@@ -21,6 +23,7 @@ export class PrismaService
     });
 
     this.prismaLoggerMiddleware = new PrismaLoggerMiddleware(logger);
+    this.prismaSoftDeleteMiddleware = new PrismaSoftDeleteMiddleware(logger);
 
     (this as any).$on('query', (e: Prisma.QueryEvent) => {
       this.prismaLoggerMiddleware.handleQuery(e);
@@ -28,6 +31,18 @@ export class PrismaService
   }
 
   async onModuleInit() {
+    // Регистрируем middleware для мягкого удаления
+    this.$extends({
+      query: {
+        $allOperations({ operation, model, args, query }) {
+          return this.prismaSoftDeleteMiddleware.handle(
+            { model, action: operation, args },
+            (params: Prisma.MiddlewareParams) => query(params),
+          );
+        },
+      },
+    });
+
     await this.$connect();
 
     this.logger.log(

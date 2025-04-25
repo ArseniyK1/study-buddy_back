@@ -1,6 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role, ROLES_KEY } from './roles.decorator';
+import { ROLES_KEY } from './roles.decorator';
+import { Role } from '@shared/types/roles.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -15,6 +21,15 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.some((role) => user.role === role);
+
+    const hasRole = requiredRoles.some((role) => user.role === role);
+
+    if (!hasRole) {
+      throw new ForbiddenException(
+        'У вас недостаточно прав для выполнения этой операции',
+      );
+    }
+
+    return true;
   }
 }

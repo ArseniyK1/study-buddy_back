@@ -35,5 +35,6 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
       useClass: TokenInterceptor,
     },
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

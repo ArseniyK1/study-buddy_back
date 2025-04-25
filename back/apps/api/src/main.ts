@@ -46,7 +46,31 @@ async function bootstrap() {
     .addTag('Dmitriy Sobolev')
     .build();
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('/api-docs', app, document);
+  const options = {
+    customCss: `
+      .topbar-wrapper img {content:url('../assets/img/lbglogo.png'); width:300px; height:auto;}
+      .swagger-ui .topbar { background-color: #1b1b1b; }
+      .swagger-ui { background-color: #1b1b1b; color: #ffffff; }
+      .swagger-ui .info .title { color: #ffffff; }
+      .swagger-ui .info .description { color: #ffffff; }
+      .swagger-ui .info li, .swagger-ui .info p, .swagger-ui .info table { color: #ffffff; }
+      .swagger-ui .scheme-container { background-color: #1b1b1b; }
+      .swagger-ui .opblock .opblock-summary-operation-id, .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-description { color: #ffffff; }
+      .swagger-ui .opblock { background-color: #2b2b2b; border-color: #404040; }
+      .swagger-ui .opblock .opblock-section-header { background-color: #2b2b2b; }
+      .swagger-ui .opblock-tag { color: #ffffff; }
+      .swagger-ui .opblock .opblock-section-header h4 { color: #ffffff; }
+      .swagger-ui .response-col_status { color: #ffffff; }
+      .swagger-ui .response-col_description { color: #ffffff; }
+      .swagger-ui .parameter__name { color: #ffffff; }
+      .swagger-ui .parameter__type { color: #ffffff; }
+      .swagger-ui .parameter__deprecated { color: #ffffff; }
+      .swagger-ui .parameter__in { color: #ffffff; }
+      .swagger-ui table thead tr td, .swagger-ui table thead tr th { color: #ffffff; }
+      .swagger-ui .responses-table td { color: #ffffff; }
+    `,
+  };
+  SwaggerModule.setup('/api-docs', app, document, options);
 
   await app.listen(port);
   logger.warn(`Server started on port ${await app.getUrl()}`);

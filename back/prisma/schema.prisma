@@ -20,6 +20,7 @@ model User {
   bookings   Booking[]
   role       Role        @relation(fields: [roleId], references: [id])
   workspaces Workspace[]
+  managedWorkspaces WorkspaceManager[]
 
   @@map("user")
 }
@@ -44,6 +45,7 @@ model Workspace {
   ownerId     Int             @map("owner_id")
   owner       User            @relation(fields: [ownerId], references: [id])
   zones       WorkspaceZone[]
+  managers    WorkspaceManager[]
 
   @@map("workspace")
 }
@@ -85,4 +87,16 @@ model Booking {
   user       User     @relation(fields: [userId], references: [id])
 
   @@map("booking")
+}
+
+model WorkspaceManager {
+  workspaceId Int       @map("workspace_id")
+  managerId   Int       @map("manager_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  manager     User      @relation(fields: [managerId], references: [id])
+
+  @@id([workspaceId, managerId])
+  @@map("workspace_manager")
 }

@@ -5,7 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class SignInDto implements SignInRequest {
   @ApiProperty({
     description: 'User email address',
-    example: 'Stephany.Morar@yahoo.com',
+    example: 'Shayne85@gmail.com',
     format: 'email',
   })
   @IsString({ message: 'Поле email должно быть типа STRING' })

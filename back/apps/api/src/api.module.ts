@@ -9,6 +9,7 @@ import { WorkplaceModule } from './workplace/workplace.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { WorkspaceZoneModule } from './workspace-zone/workspace-zone.module';
 import { WorkspaceModule } from './workspace/workspace.module';
+import { RolesGuard } from './auth/guard/roles.guard';
 
 @Module({
   imports: [
@@ -26,6 +27,10 @@ import { WorkspaceModule } from './workspace/workspace.module';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     JwtService,
   ],

@@ -68,7 +68,12 @@ export class AuthService {
   }
 
   async getProfile(data: GetProfileRequest): Promise<User> {
-    console.log('id', data);
+    if (!data.id) {
+      throw new RpcException({
+        code: Status.INVALID_ARGUMENT,
+        message: 'ID пользователя не указан!',
+      });
+    }
     const user = await this.prisma.user.findUnique({
       where: { id: +data.id },
       include: {

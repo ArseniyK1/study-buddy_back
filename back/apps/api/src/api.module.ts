@@ -6,7 +6,7 @@ import { AuthGuard } from './auth/guard/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { LoggerModule } from './logger/logger.module';
 import { WorkplaceModule } from './workplace/workplace.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaModule } from '../../../prisma/prisma.module';
 import { WorkspaceZoneModule } from './workspace-zone/workspace-zone.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 

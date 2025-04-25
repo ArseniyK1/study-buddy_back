@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@prisma/prisma.service';
 import { CreateWorkspaceZoneDto } from './dto/create-workspace-zone.dto';
 import { UpdateWorkspaceZoneDto } from './dto/update-workspace-zone.dto';
 
 @Injectable()
 export class WorkspaceZoneService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createWorkspaceZoneDto: CreateWorkspaceZoneDto) {
     return this.prisma.workspaceZone.create({

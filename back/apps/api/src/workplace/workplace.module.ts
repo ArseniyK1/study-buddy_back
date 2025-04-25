@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { WorkplaceController } from './workplace.controller';
 import { WorkplaceService } from './workplace.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@prisma/prisma.service';
 import { WorkspaceModule } from '../workspace/workspace.module';
 
 @Module({

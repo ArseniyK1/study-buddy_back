@@ -19,7 +19,8 @@
     "paths": {
       "@app/api/*": ["apps/api/src/*"],
       "@app/auth/*": ["apps/auth/src/*"],
-      "@prisma/*": ["prisma/*"]
+      "@prisma/*": ["prisma/*"],
+      "@shared/*": ["shared/*"]
     }
   }
 }

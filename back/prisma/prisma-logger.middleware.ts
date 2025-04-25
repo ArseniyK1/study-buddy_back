@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LoggerService } from '../logger/logger.service';
+import { LoggerService } from '../apps/api/src/logger/logger.service';
 import * as chalk from 'chalk';
 
 @Injectable()

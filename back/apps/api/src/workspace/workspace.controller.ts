@@ -14,7 +14,7 @@ import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { ApproveWorkspaceDto } from './dto/approve-workspace.dto';
 import { AddManagerDto } from './dto/add-manager.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
 import { Role } from '@shared/types/roles.enum';
 import { Roles } from '../auth/guard/roles.decorator';
@@ -24,14 +24,9 @@ import { Roles } from '../auth/guard/roles.decorator';
 export class WorkspaceController {
   constructor(private readonly workspaceService: WorkspaceService) {}
 
-  @Roles(Role.MANAGER)
+  @Roles(Role.ADMIN)
   @Post()
   @ApiOperation({ summary: 'Создать новое коворкинг пространство' })
-  @ApiResponse({
-    status: 201,
-    description: 'Коворкинг пространство успешно создано.',
-  })
-  @ApiResponse({ status: 400, description: 'Неверный запрос.' })
   create(
     @Request() req: IRequest,
     @Body() createWorkspaceDto: CreateWorkspaceDto,
@@ -41,20 +36,12 @@ export class WorkspaceController {
 
   @Get()
   @ApiOperation({ summary: 'Получить все коворкинг пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Возвращает все коворкинг пространства.',
-  })
   findAll() {
     return this.workspaceService.findAll();
   }
 
   @Get('approved')
   @ApiOperation({ summary: 'Получить все одобренные коворкинг пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Возвращает все одобренные коворкинг пространства.',
-  })
   findApproved() {
     return this.workspaceService.findApproved();
   }
@@ -63,10 +50,6 @@ export class WorkspaceController {
   @ApiOperation({
     summary: 'Получить все коворкинг пространства, ожидающие одобрения',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Возвращает все коворкинг пространства, ожидающие одобрения.',
-  })
   findPendingApproval() {
     return this.workspaceService.findPendingApproval();
   }
@@ -74,14 +57,6 @@ export class WorkspaceController {
   @Get(':id')
   @ApiOperation({ summary: 'Получить коворкинг пространство по ID' })
   @ApiParam({ name: 'id', description: 'ID коворкинг пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Возвращает коворкинг пространство.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Коворкинг пространство не найдено.',
-  })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.workspaceService.findOne(id);
   }
@@ -89,14 +64,6 @@ export class WorkspaceController {
   @Patch(':id')
   @ApiOperation({ summary: 'Обновить коворкинг пространство' })
   @ApiParam({ name: 'id', description: 'ID коворкинг пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Коворкинг пространство успешно обновлено.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Коворкинг пространство не найдено.',
-  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateWorkspaceDto: UpdateWorkspaceDto,
@@ -107,14 +74,6 @@ export class WorkspaceController {
   @Patch(':id/approve')
   @ApiOperation({ summary: 'Одобрить или отклонить рабочее пространство' })
   @ApiParam({ name: 'id', description: 'ID рабочего пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Коворкинг пространство успешно одобрено/отклонено.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Коворкинг пространство не найдено.',
-  })
   approve(
     @Param('id', ParseIntPipe) id: number,
     @Body() approveWorkspaceDto: ApproveWorkspaceDto,
@@ -125,11 +84,6 @@ export class WorkspaceController {
   @Delete(':id')
   @ApiOperation({ summary: 'Удалить рабочее пространство' })
   @ApiParam({ name: 'id', description: 'ID рабочего пространства' })
-  @ApiResponse({
-    status: 200,
-    description: 'Рабочее пространство успешно удалено.',
-  })
-  @ApiResponse({ status: 404, description: 'Рабочее пространство не найдено.' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.workspaceService.remove(id);
   }
@@ -137,14 +91,6 @@ export class WorkspaceController {
   @Post(':id/managers')
   @ApiOperation({ summary: 'Добавить менеджера в коворкинг пространство' })
   @ApiParam({ name: 'id', description: 'ID коворкинг пространства' })
-  @ApiResponse({
-    status: 201,
-    description: 'Менеджер успешно добавлен в коворкинг пространство.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Коворкинг пространство или пользователь не найдены.',
-  })
   addManager(
     @Param('id', ParseIntPipe) id: number,
     @Body() addManagerDto: AddManagerDto,
@@ -156,14 +102,6 @@ export class WorkspaceController {
   @ApiOperation({ summary: 'Удалить менеджера из коворкинг пространства' })
   @ApiParam({ name: 'id', description: 'ID коворкинг пространства' })
   @ApiParam({ name: 'managerId', description: 'ID менеджера' })
-  @ApiResponse({
-    status: 200,
-    description: 'Менеджер успешно удален из коворкинг пространства.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Коворкинг пространство или менеджер не найдены.',
-  })
   removeManager(
     @Param('id', ParseIntPipe) id: number,
     @Param('managerId', ParseIntPipe) managerId: number,

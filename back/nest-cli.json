@@ -1,24 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/study-budy_monorepo/src",
+  "sourceRoot": "apps/api/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/study-budy_monorepo/tsconfig.app.json"
+    "tsConfigPath": "apps/api/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/study-budy_monorepo",
+  "root": "apps/api",
   "projects": {
-    "study-budy_monorepo": {
-      "type": "application",
-      "root": "apps/study-budy_monorepo",
-      "entryFile": "main",
-      "sourceRoot": "apps/study-budy_monorepo/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/study-budy_monorepo/tsconfig.app.json"
-      }
-    },
     "api": {
       "type": "application",
       "root": "apps/api",

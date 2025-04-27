@@ -3,26 +3,44 @@
   "tasks": [
     {
       "type": "shell",
-      "command": "cd back && concurrently \"cross-env NODE_ENV=development nest start api --watch\" \"nest start auth --watch\"",
+      "command": "cd back && npm run start:dev",
       "problemMatcher": [],
-      "label": "back",
-      "detail": "Start both API and Auth services"
+      "label": "🔄 back",
+      "detail": "Start both API and Auth services",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     {
       "type": "shell",
-      "command": "cd front; npm run dev",
+      "command": "cd front && npm run dev",
       "problemMatcher": [],
-      "label": "front",
-      "detail": "Start the frontend development server"
+      "label": "🎨 front",
+      "detail": "Start the frontend development server",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     {
-      "label": "Start All",
-      "dependsOn": ["back", "front"],
+      "label": "🚀 Start All",
+      "dependsOn": ["🔄 back", "🎨 front"],
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true
+      }
     }
   ]
 }

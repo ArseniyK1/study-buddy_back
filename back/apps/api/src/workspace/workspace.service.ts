@@ -1,3 +1,4 @@
+import { Workspace } from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
@@ -13,25 +14,18 @@ export class WorkspaceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, createWorkspaceDto: CreateWorkspaceDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: +userId },
-    });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return this.prisma.workspace.create({
+    return await this.prisma.workspace.create({
       data: {
         name: createWorkspaceDto.name,
         address: createWorkspaceDto.address,
         description: createWorkspaceDto.description,
         capacity: createWorkspaceDto.capacity,
         amenities: createWorkspaceDto.amenities,
-        ownerId: user.id,
-        approved: false, // New workspaces are not approved by default
+        ownerId: userId,
+        approved: false,
       },
       include: {
         owner: true,
-        zones: true,
       },
     });
   }
@@ -40,7 +34,9 @@ export class WorkspaceService {
     return this.prisma.workspace.findMany({
       include: {
         owner: true,
-        zones: true,
+      },
+      orderBy: {
+        id: 'desc',
       },
     });
   }
@@ -52,7 +48,6 @@ export class WorkspaceService {
       },
       include: {
         owner: true,
-        zones: true,
       },
     });
   }
@@ -64,7 +59,6 @@ export class WorkspaceService {
       },
       include: {
         owner: true,
-        zones: true,
       },
     });
   }
@@ -74,12 +68,13 @@ export class WorkspaceService {
       where: { id },
       include: {
         owner: true,
-        zones: true,
       },
     });
 
     if (!workspace) {
-      throw new NotFoundException(`Workspace with ID ${id} not found`);
+      throw new NotFoundException(
+        `Коворкинг пространство с ID ${id} не существует`,
+      );
     }
 
     return workspace;
@@ -92,7 +87,6 @@ export class WorkspaceService {
         data: updateWorkspaceDto,
         include: {
           owner: true,
-          zones: true,
         },
       });
     } catch (error) {
@@ -109,7 +103,6 @@ export class WorkspaceService {
         },
         include: {
           owner: true,
-          zones: true,
         },
       });
     } catch (error) {

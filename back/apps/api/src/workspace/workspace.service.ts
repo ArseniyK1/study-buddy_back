@@ -8,6 +8,7 @@ import { PrismaService } from '@prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { ApproveWorkspaceDto } from './dto/approve-workspace.dto';
+import { FindAllDto } from './dto/find-all.dto';
 
 @Injectable()
 export class WorkspaceService {
@@ -30,14 +31,42 @@ export class WorkspaceService {
     });
   }
 
-  async findAll() {
+  async findAll(findAllDto: FindAllDto) {
+    const queryParams = !!findAllDto?.query ? findAllDto?.query : '';
+    console.log(queryParams);
+
     return this.prisma.workspace.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: queryParams,
+              mode: 'insensitive',
+            },
+          },
+          {
+            address: {
+              contains: queryParams,
+              mode: 'insensitive',
+            },
+          },
+          {
+            description: {
+              contains: queryParams,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
       include: {
         owner: true,
+        managers: true,
       },
       orderBy: {
         id: 'desc',
       },
+      skip: +findAllDto?.offset || 0,
+      take: +findAllDto?.limit || 100,
     });
   }
 
@@ -49,6 +78,11 @@ export class WorkspaceService {
       include: {
         owner: true,
       },
+      orderBy: {
+        id: 'desc',
+      },
+      skip: 0,
+      take: 100,
     });
   }
 
@@ -60,6 +94,11 @@ export class WorkspaceService {
       include: {
         owner: true,
       },
+      orderBy: {
+        id: 'desc',
+      },
+      skip: 0,
+      take: 100,
     });
   }
 
@@ -68,6 +107,7 @@ export class WorkspaceService {
       where: { id },
       include: {
         owner: true,
+        managers: true,
       },
     });
 

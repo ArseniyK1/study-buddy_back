@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   Request,
+  Query,
 } from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
@@ -18,6 +19,7 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
 import { Role } from '@shared/types/roles.enum';
 import { Roles } from '../auth/guard/roles.decorator';
+import { FindAllDto } from './dto/find-all.dto';
 
 @ApiTags('Коворкинг пространства')
 @Controller('workspaces')
@@ -36,8 +38,8 @@ export class WorkspaceController {
 
   @Get()
   @ApiOperation({ summary: 'Получить все коворкинг пространства' })
-  findAll() {
-    return this.workspaceService.findAll();
+  findAll(@Query() findAllDto: FindAllDto) {
+    return this.workspaceService.findAll(findAllDto);
   }
 
   @Get('approved')

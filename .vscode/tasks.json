@@ -20,6 +20,24 @@
       "detail": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --prefix \"[{name}]\" --names \"API,AUTH\" \"cross-env NODE_ENV=development nest start api --watch\" \"nest start auth --watch\""
     },
     {
+      "type": "shell",
+      "command": "cd back && npx prisma studio",
+      "problemMatcher": [],
+      "label": "db-view",
+      "icon": { "color": "terminal.ansiBlue", "id": "database" },
+      "detail": "Prisma Studio"
+    },
+    {
+      "label": "back and db view",
+      "dependsOn": ["back", "db-view"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
       "label": "Run front and back",
       "dependsOn": ["front", "back"],
       "dependsOrder": "parallel",

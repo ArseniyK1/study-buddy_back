@@ -13,41 +13,55 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  // Create roles first
-  // const roles = await createRoles();
-  // console.log('Roles created successfully');
+  // Создание ролей
+  await createRoles();
+  console.log('Roles created successfully');
 
-  // Create users with role IDs
+  // Создание пользователей с ID ролей
   const users = await createUsers(100);
-  console.log('Users created successfully');
+  console.log('Пользователи созданы успешно');
 
-  // Extract user IDs for workspace creation
-  const userIds = users.map((user) => user.id);
+  // Извлечение ID пользователей для создания коворкинга
+  const ownerIds = users
+    .map((user) => {
+      if (user.roleId === 2) {
+        return user.id;
+      }
+    })
+    .filter((id): id is number => id !== undefined);
 
-  // Create workspaces with user IDs
-  const workspaces = await createWorkspaces(50, userIds);
-  console.log('Workspaces created successfully');
+  // Создание коворкингов с ID пользователей
+  const workspaces = await createWorkspaces(50, ownerIds);
+  console.log('Коворкинги созданы успешно');
 
-  // Extract workspace IDs for zone creation
+  // Извлечение ID коворкингов для создания зон
   const workspaceIds = workspaces.map((workspace) => workspace.id);
 
-  // Create workspace zones with workspace IDs
+  // Создание зон коворкингов с ID коворкингов
   const workspaceZones = await createWorkspaceZones(100, workspaceIds);
-  console.log('Workspace zones created successfully');
+  console.log('Зоны коворкингов созданы успешно');
 
-  // Extract zone IDs for place creation
+  // Извлечение ID зон для создания рабочих мест
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
-  // Create places with zone IDs
+  // Создание рабочих мест с ID зон
   const places = await createPlaces(200, zoneIds);
-  console.log('Places created successfully');
+  console.log('Рабочие места созданы успешно');
 
-  // Extract place IDs for booking creation
+  // Извлечение ID рабочих мест для создания бронирований
   const placeIds = places.map((place) => place.id);
 
-  // Create bookings with user IDs and place IDs
-  const bookings = await createBookings(300, userIds, placeIds);
-  console.log('Bookings created successfully');
+  const clientIds = users
+    .map((user) => {
+      if (user.roleId === 1) {
+        return user.id;
+      }
+    })
+    .filter((id): id is number => id !== undefined);
+
+  // Создание бронирований с ID пользователей и ID рабочих мест
+  await createBookings(300, clientIds, placeIds);
+  console.log('Бронирования созданы успешно');
 
   console.log('Seeding completed successfully!');
 }

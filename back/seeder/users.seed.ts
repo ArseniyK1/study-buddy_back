@@ -20,7 +20,7 @@ export const createUsers = async (quantity: number) => {
         password: hashPassword,
         email: faker.internet.email(),
         phone: faker.phone.number(),
-        roleId: faker.number.int({ min: 1, max: 3 }),
+        roleId: faker.number.int({ min: 1, max: 4 }),
       },
     });
 

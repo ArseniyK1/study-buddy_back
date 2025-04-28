@@ -19,9 +19,13 @@ export const createRoles = async () => {
       value: 'MANAGER',
       description: 'Менеджер',
     },
+    {
+      value: 'SUPER_ADMIN',
+      description: 'Супер администратор',
+    },
   ];
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < roles_values.length; i++) {
     const role = await prisma.role.create({
       data: {
         value: roles_values[i].value,

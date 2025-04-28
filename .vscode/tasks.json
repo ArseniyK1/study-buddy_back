@@ -3,10 +3,10 @@
   "tasks": [
     {
       "type": "shell",
-      "command": "cd back && npm run start:dev",
+      "command": "cd back; npm run start:dev",
       "problemMatcher": [],
       "label": "🔄 back",
-      "detail": "Start both API and Auth services",
+      "detail": "Start the backend development server",
       "presentation": {
         "reveal": "always",
         "panel": "new",
@@ -28,8 +28,15 @@
       }
     },
     {
+      "type": "shell",
+      "command": "npx prisma studio",
+      "problemMatcher": [],
+      "label": "db view",
+      "detail": "Start the database view"
+    },
+    {
       "label": "🚀 Start All",
-      "dependsOn": ["🔄 back", "🎨 front"],
+      "dependsOn": ["🔄 back", "🎨 front", "db view"],
       "group": {
         "kind": "build",
         "isDefault": true

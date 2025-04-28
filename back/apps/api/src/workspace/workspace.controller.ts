@@ -19,7 +19,7 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
 import { Role } from '@shared/types/roles.enum';
 import { Roles } from '../auth/guard/roles.decorator';
-import { FindAllDto } from './dto/find-all.dto';
+import { FindWorkspacesDto } from './dto/find-workspaces.dto';
 
 @ApiTags('Коворкинг пространства')
 @Controller('workspaces')
@@ -38,22 +38,8 @@ export class WorkspaceController {
 
   @Get()
   @ApiOperation({ summary: 'Получить все коворкинг пространства' })
-  findAll(@Query() findAllDto: FindAllDto) {
+  findAll(@Query() findAllDto: FindWorkspacesDto) {
     return this.workspaceService.findAll(findAllDto);
-  }
-
-  @Get('approved')
-  @ApiOperation({ summary: 'Получить все одобренные коворкинг пространства' })
-  findApproved() {
-    return this.workspaceService.findApproved();
-  }
-
-  @Get('pending')
-  @ApiOperation({
-    summary: 'Получить все коворкинг пространства, ожидающие одобрения',
-  })
-  findPendingApproval() {
-    return this.workspaceService.findPendingApproval();
   }
 
   @Get(':id')

@@ -1,27 +1,27 @@
-import { Workspace } from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { ApproveWorkspaceDto } from './dto/approve-workspace.dto';
-import { FindAllDto } from './dto/find-all.dto';
+import { FindWorkspacesDto } from './dto/find-workspaces.dto';
 
 @Injectable()
 export class WorkspaceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: number, createWorkspaceDto: CreateWorkspaceDto) {
+  async create(userId: number, dto: CreateWorkspaceDto) {
     return await this.prisma.workspace.create({
       data: {
-        name: createWorkspaceDto.name,
-        address: createWorkspaceDto.address,
-        description: createWorkspaceDto.description,
-        capacity: createWorkspaceDto.capacity,
-        amenities: createWorkspaceDto.amenities,
+        name: dto.name,
+        address: dto.address,
+        description: dto.description,
+        capacity: dto.capacity,
+        amenities: dto.amenities,
         ownerId: userId,
         approved: false,
       },
@@ -31,31 +31,36 @@ export class WorkspaceService {
     });
   }
 
-  async findAll(findAllDto: FindAllDto) {
-    const queryParams = !!findAllDto?.query ? findAllDto?.query : '';
-    console.log(queryParams);
+  async findAll(dto: FindWorkspacesDto) {
+    const queryParams = dto?.query || '';
+    const status = dto?.status;
 
     return this.prisma.workspace.findMany({
       where: {
-        OR: [
+        AND: [
           {
-            name: {
-              contains: queryParams,
-              mode: 'insensitive',
-            },
+            OR: [
+              {
+                name: {
+                  contains: queryParams,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                address: {
+                  contains: queryParams,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                description: {
+                  contains: queryParams,
+                  mode: 'insensitive',
+                },
+              },
+            ],
           },
-          {
-            address: {
-              contains: queryParams,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: queryParams,
-              mode: 'insensitive',
-            },
-          },
+          status !== undefined ? { approved: status } : {},
         ],
       },
       include: {
@@ -65,40 +70,8 @@ export class WorkspaceService {
       orderBy: {
         id: 'desc',
       },
-      skip: +findAllDto?.offset || 0,
-      take: +findAllDto?.limit || 100,
-    });
-  }
-
-  async findApproved() {
-    return this.prisma.workspace.findMany({
-      where: {
-        approved: true,
-      },
-      include: {
-        owner: true,
-      },
-      orderBy: {
-        id: 'desc',
-      },
-      skip: 0,
-      take: 100,
-    });
-  }
-
-  async findPendingApproval() {
-    return this.prisma.workspace.findMany({
-      where: {
-        approved: false,
-      },
-      include: {
-        owner: true,
-      },
-      orderBy: {
-        id: 'desc',
-      },
-      skip: 0,
-      take: 100,
+      skip: +dto?.offset || 0,
+      take: +dto?.limit || 100,
     });
   }
 
@@ -108,6 +81,7 @@ export class WorkspaceService {
       include: {
         owner: true,
         managers: true,
+        zones: true,
       },
     });
 
@@ -120,43 +94,76 @@ export class WorkspaceService {
     return workspace;
   }
 
-  async update(id: number, updateWorkspaceDto: UpdateWorkspaceDto) {
+  async update(id: number, dto: UpdateWorkspaceDto) {
     try {
-      return await this.prisma.workspace.update({
+      const workspace = await this.prisma.workspace.update({
         where: { id },
-        data: updateWorkspaceDto,
+        data: dto,
         include: {
           owner: true,
         },
       });
+
+      if (!workspace?.id) {
+        throw new NotFoundException(
+          `Коворкинг пространство с ID ${id} не найдено`,
+        );
+      }
+
+      return workspace;
     } catch (error) {
-      throw new NotFoundException(`Workspace with ID ${id} not found`);
+      throw new InternalServerErrorException(
+        `Произошла ошибка при обновлении коворкинг пространства с ID ${id}`,
+        { cause: error },
+      );
     }
   }
 
-  async approve(id: number, approveWorkspaceDto: ApproveWorkspaceDto) {
+  async approve(id: number, dto: ApproveWorkspaceDto) {
     try {
-      return await this.prisma.workspace.update({
+      const workspace = await this.prisma.workspace.update({
         where: { id },
         data: {
-          approved: approveWorkspaceDto.approved,
+          approved: dto.approved,
         },
         include: {
           owner: true,
         },
       });
+
+      if (!workspace?.id) {
+        throw new NotFoundException(
+          `Коворкинг пространство с ID ${id} не найдено`,
+        );
+      }
+
+      return workspace;
     } catch (error) {
-      throw new NotFoundException(`Workspace with ID ${id} not found`);
+      throw new InternalServerErrorException(
+        `Произошла ошибка при одобрении коворкинг пространства с ID ${id}`,
+        { cause: error },
+      );
     }
   }
 
   async remove(id: number) {
     try {
-      return await this.prisma.workspace.delete({
+      const workspace = await this.prisma.workspace.delete({
         where: { id },
       });
+
+      if (!workspace?.id) {
+        throw new NotFoundException(
+          `Коворкинг пространство с ID ${id} не найдено`,
+        );
+      }
+
+      return workspace;
     } catch (error) {
-      throw new NotFoundException(`Workspace with ID ${id} not found`);
+      throw new InternalServerErrorException(
+        `Произошла ошибка при удалении коворкинг пространства с ID ${id}`,
+        { cause: error },
+      );
     }
   }
 

@@ -12,39 +12,38 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 export class WorkplaceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createPlaceDto: CreatePlaceDto) {
-    if (createPlaceDto.zoneId) {
+  async create(dto: CreatePlaceDto) {
+    if (dto.zoneId) {
       const zone = await this.prisma.workspaceZone.findUnique({
-        where: { id: createPlaceDto.zoneId },
+        where: { id: dto.zoneId },
       });
 
       if (!zone) {
-        throw new NotFoundException(
-          `Zone with ID ${createPlaceDto.zoneId} not found`,
-        );
+        throw new NotFoundException(`Зона с ID ${dto.zoneId} не найдена`);
       }
     }
 
     return this.prisma.place.create({
       data: {
-        name: createPlaceDto.name,
-        description: createPlaceDto.description,
-        status: createPlaceDto.status,
-        zoneId: createPlaceDto.zoneId,
+        name: dto.name,
+        description: dto.description,
+        status: dto.status,
+        zoneId: dto.zoneId,
       },
     });
   }
 
-  // Get all places
   async findAll() {
     return this.prisma.place.findMany({
       include: {
         zone: true,
       },
+      orderBy: {
+        id: 'desc',
+      },
     });
   }
 
-  // Get a place by ID
   async findOne(id: number) {
     const place = await this.prisma.place.findUnique({
       where: { id },
@@ -61,9 +60,7 @@ export class WorkplaceService {
     return place;
   }
 
-  // Update a place
   async update(id: number, updatePlaceDto: UpdatePlaceDto) {
-    // Check if the place exists
     const place = await this.prisma.place.findUnique({
       where: { id },
     });
@@ -72,7 +69,6 @@ export class WorkplaceService {
       throw new NotFoundException(`Place with ID ${id} not found`);
     }
 
-    // If zoneId is provided, check if the zone exists
     if (updatePlaceDto.zoneId) {
       const zone = await this.prisma.workspaceZone.findUnique({
         where: { id: updatePlaceDto.zoneId },
@@ -91,9 +87,7 @@ export class WorkplaceService {
     });
   }
 
-  // Remove a place
   async remove(id: number) {
-    // Check if the place exists
     const place = await this.prisma.place.findUnique({
       where: { id },
     });
@@ -107,9 +101,7 @@ export class WorkplaceService {
     });
   }
 
-  // Create a booking for a place
   async createBooking(createBookingDto: CreateBookingDto) {
-    // Check if the place exists
     const place = await this.prisma.place.findUnique({
       where: { id: createBookingDto.placeId },
     });
@@ -120,7 +112,6 @@ export class WorkplaceService {
       );
     }
 
-    // Check if the user exists
     const user = await this.prisma.user.findUnique({
       where: { id: createBookingDto.userId },
     });
@@ -131,7 +122,6 @@ export class WorkplaceService {
       );
     }
 
-    // Check if the place is available for the requested time period
     const existingBookings = await this.prisma.booking.findMany({
       where: {
         placeId: createBookingDto.placeId,
@@ -164,7 +154,6 @@ export class WorkplaceService {
       );
     }
 
-    // Calculate total price based on the zone's price per hour
     let totalPrice = 0;
     if (place.zoneId) {
       const zone = await this.prisma.workspaceZone.findUnique({
@@ -192,9 +181,7 @@ export class WorkplaceService {
     });
   }
 
-  // Get all bookings for a place
   async getPlaceBookings(placeId: number) {
-    // Check if the place exists
     const place = await this.prisma.place.findUnique({
       where: { id: placeId },
     });

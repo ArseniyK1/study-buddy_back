@@ -18,21 +18,23 @@ export class WorkspaceZoneResponseDto {
 }
 
 export class PlaceResponseDto {
-  @ApiProperty({ description: 'Place ID' })
+  @ApiProperty({ description: 'ID рабочего места' })
   id: number;
 
-  @ApiProperty({ description: 'Place name' })
+  @ApiProperty({ description: 'Название рабочего места' })
   name: string;
 
-  @ApiPropertyOptional({ description: 'Place description' })
+  @ApiPropertyOptional({ description: 'Описание рабочего места' })
   description?: string;
 
-  @ApiProperty({ description: 'Place status' })
+  @ApiProperty({ description: 'Статус рабочего места' })
   status: string;
 
-  @ApiPropertyOptional({ description: 'Zone ID this place belongs to' })
+  @ApiPropertyOptional({
+    description: 'ID зоны, к которой относится рабочее место',
+  })
   zoneId?: number;
 
-  @ApiPropertyOptional({ description: 'Zone information' })
+  @ApiPropertyOptional({ description: 'Информация о зоне' })
   zone?: WorkspaceZoneResponseDto;
 }

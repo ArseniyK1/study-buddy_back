@@ -2,52 +2,32 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "shell",
-      "command": "cd back; npm run start:dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "front",
       "problemMatcher": [],
-      "label": "🔄 back",
-      "detail": "Start the backend development server",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "showReuseMessage": false,
-        "clear": true
-      }
+      "label": "front",
+      "icon": { "color": "terminal.ansiRed", "id": "browser" },
+      "detail": "nuxt dev"
     },
     {
-      "type": "shell",
-      "command": "cd front && npm run dev",
+      "type": "npm",
+      "script": "start:dev",
+      "path": "back",
       "problemMatcher": [],
-      "label": "🎨 front",
-      "detail": "Start the frontend development server",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "showReuseMessage": false,
-        "clear": true
-      }
+      "label": "back",
+      "icon": { "color": "terminal.ansiGreen", "id": "server" },
+      "detail": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --prefix \"[{name}]\" --names \"API,AUTH\" \"cross-env NODE_ENV=development nest start api --watch\" \"nest start auth --watch\""
     },
     {
-      "type": "shell",
-      "command": "npx prisma studio",
-      "problemMatcher": [],
-      "label": "db view",
-      "detail": "Start the database view"
-    },
-    {
-      "label": "🚀 Start All",
-      "dependsOn": ["🔄 back", "🎨 front", "db view"],
+      "label": "Run front and back",
+      "dependsOn": ["front", "back"],
+      "dependsOrder": "parallel",
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "showReuseMessage": false,
-        "clear": true
-      }
+      "problemMatcher": []
     }
   ]
 }

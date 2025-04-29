@@ -17,8 +17,8 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@app/api/*": ["apps/api/src/*"],
-      "@app/auth/*": ["apps/auth/src/*"],
+      "@app/api/*": ["apps/api/*"],
+      "@app/auth/*": ["apps/auth/*"],
       "@prisma/*": ["prisma/*"],
       "@shared/*": ["shared/*"]
     }

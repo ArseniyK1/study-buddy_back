@@ -7,6 +7,8 @@ import { PrismaService } from '@prisma/prisma.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { workplacesStatus } from '@shared/types/workplaces-status.enum';
+import { bookingStatus } from '@shared/types/booking-status.enum';
 
 @Injectable()
 export class WorkplaceService {
@@ -27,7 +29,7 @@ export class WorkplaceService {
       data: {
         name: dto.name,
         description: dto.description,
-        status: dto.status,
+        status: workplacesStatus.AVAILABLE,
         zoneId: dto.zoneId,
       },
     });
@@ -101,56 +103,49 @@ export class WorkplaceService {
     });
   }
 
-  async createBooking(createBookingDto: CreateBookingDto) {
+  async createBooking(userId: number, dto: CreateBookingDto) {
     const place = await this.prisma.place.findUnique({
-      where: { id: createBookingDto.placeId },
+      where: { id: dto.placeId },
     });
 
-    if (!place) {
+    if (!place?.id) {
       throw new NotFoundException(
-        `Place with ID ${createBookingDto.placeId} not found`,
-      );
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: createBookingDto.userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException(
-        `User with ID ${createBookingDto.userId} not found`,
+        `Рабочее место с ID ${dto.placeId} не найдено`,
       );
     }
 
     const existingBookings = await this.prisma.booking.findMany({
       where: {
-        placeId: createBookingDto.placeId,
+        placeId: dto.placeId,
         OR: [
           {
+            // Сценарий 1: Существующая бронь началась раньше и все еще активна
             AND: [
-              { startTime: { lte: createBookingDto.startTime } },
-              { endTime: { gt: createBookingDto.startTime } },
+              { startTime: { lte: dto.startTime } },
+              { endTime: { gt: dto.startTime } },
             ],
           },
           {
+            // Сценарий 2: Существующая бронь началась во время новой и продолжается после
             AND: [
-              { startTime: { lt: createBookingDto.endTime } },
-              { endTime: { gte: createBookingDto.endTime } },
+              { startTime: { lt: dto.endTime } },
+              { endTime: { gte: dto.endTime } },
             ],
           },
           {
+            // Сценарий 3: Существующая бронь полностью внутри новой
             AND: [
-              { startTime: { gte: createBookingDto.startTime } },
-              { endTime: { lte: createBookingDto.endTime } },
+              { startTime: { gte: dto.startTime } },
+              { endTime: { lte: dto.endTime } },
             ],
           },
         ],
       },
     });
 
-    if (existingBookings.length > 0) {
+    if (existingBookings?.length > 0) {
       throw new BadRequestException(
-        'The place is already booked for the requested time period',
+        'Это место уже забронировано для указанного периода',
       );
     }
 
@@ -162,8 +157,8 @@ export class WorkplaceService {
 
       if (zone) {
         const hours =
-          (createBookingDto.endTime.getTime() -
-            createBookingDto.startTime.getTime()) /
+          (new Date(dto.endTime).getTime() -
+            new Date(dto.startTime).getTime()) /
           (1000 * 60 * 60);
         totalPrice = zone.pricePerHour * hours;
       }
@@ -171,12 +166,12 @@ export class WorkplaceService {
 
     return this.prisma.booking.create({
       data: {
-        startTime: createBookingDto.startTime,
-        endTime: createBookingDto.endTime,
-        status: 'ACTIVE',
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        status: bookingStatus.ACTIVE,
         totalPrice,
-        userId: createBookingDto.userId,
-        placeId: createBookingDto.placeId,
+        userId,
+        placeId: dto.placeId,
       },
     });
   }
@@ -187,7 +182,7 @@ export class WorkplaceService {
     });
 
     if (!place) {
-      throw new NotFoundException(`Place with ID ${placeId} not found`);
+      throw new NotFoundException(`Рабочее место с ID ${placeId} не найдено`);
     }
 
     return this.prisma.booking.findMany({

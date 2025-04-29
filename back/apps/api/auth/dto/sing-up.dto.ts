@@ -9,11 +9,11 @@ import {
 import { Type } from 'class-transformer';
 import { SignUpRequest, User } from 'shared/generated/auth';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
+import { faker } from '@faker-js/faker';
 class UserNameDto implements Omit<User, 'id' | 'role' | 'email' | 'phone'> {
   @ApiProperty({
     description: 'User first name',
-    example: 'John',
+    example: faker.person.firstName(),
   })
   @IsString({ message: 'Поле firstName должно быть типа STRING' })
   @IsNotEmpty({ message: 'Поле firstName не должно быть пустым' })
@@ -21,7 +21,7 @@ class UserNameDto implements Omit<User, 'id' | 'role' | 'email' | 'phone'> {
 
   @ApiProperty({
     description: 'User last name',
-    example: 'Doe',
+    example: faker.person.lastName(),
   })
   @IsString({ message: 'Поле lastName должно быть типа STRING' })
   @IsNotEmpty({ message: 'Поле lastName не должно быть пустым' })
@@ -29,7 +29,7 @@ class UserNameDto implements Omit<User, 'id' | 'role' | 'email' | 'phone'> {
 
   @ApiPropertyOptional({
     description: 'User middle name',
-    example: 'Michael',
+    example: faker.person.middleName(),
   })
   @IsString({ message: 'Поле middleName должно быть типа STRING' })
   @IsOptional()
@@ -39,7 +39,7 @@ class UserNameDto implements Omit<User, 'id' | 'role' | 'email' | 'phone'> {
 export class SignUpDto implements SignUpRequest {
   @ApiProperty({
     description: 'User email address',
-    example: 'user@example.com',
+    example: faker.internet.email(),
     format: 'email',
   })
   @IsString({ message: 'Поле email должно быть типа STRING' })
@@ -49,7 +49,7 @@ export class SignUpDto implements SignUpRequest {
 
   @ApiProperty({
     description: 'User password',
-    example: 'password123',
+    example: faker.internet.password(),
     format: 'password',
   })
   @IsString({ message: 'Поле password должно быть типа STRING' })
@@ -58,7 +58,7 @@ export class SignUpDto implements SignUpRequest {
 
   @ApiProperty({
     description: 'User phone number',
-    example: '+1234567890',
+    example: faker.phone.number(),
   })
   @IsString({ message: 'Поле phone должно быть типа STRING' })
   @IsNotEmpty({ message: 'Поле phone не должно быть пустым' })
@@ -75,7 +75,7 @@ export class SignUpDto implements SignUpRequest {
 
   @ApiPropertyOptional({
     description: 'User role ID',
-    example: 1,
+    example: faker.number.int({ min: 1, max: 4 }),
   })
   @IsNumber({}, { message: 'Поле roleId должно быть типа NUMBER' })
   @IsOptional()

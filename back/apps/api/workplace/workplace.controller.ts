@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { WorkplaceService } from './workplace.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -15,6 +16,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { PlaceResponseDto } from './dto/place-response.dto';
 import { BookingResponseDto } from './dto/booking-response.dto';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { IRequest } from '@shared/types/IRequest.interface';
 
 @ApiTags('Рабочее место (Workplace)')
 @Controller('workplace')
@@ -69,9 +71,13 @@ export class WorkplaceController {
   @ApiOperation({ summary: 'Создать бронирование для рабочего места' })
   @ApiBody({ type: CreateBookingDto })
   createBooking(
+    @Request() req: IRequest,
     @Body() createBookingDto: CreateBookingDto,
   ): Promise<BookingResponseDto | any> {
-    return this.workplaceService.createBooking(createBookingDto);
+    return this.workplaceService.createBooking(
+      req.user.userId,
+      createBookingDto,
+    );
   }
 
   @Get(':id/bookings')

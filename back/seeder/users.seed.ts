@@ -73,6 +73,5 @@ export const createUsers = async (quantity: number) => {
     }
   }
 
-  console.log(`Successfully created ${users.length} users`);
   return users;
 };

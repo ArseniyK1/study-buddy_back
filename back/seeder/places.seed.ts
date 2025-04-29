@@ -22,6 +22,5 @@ export const createPlaces = async (quantity: number, zoneIds: number[]) => {
     places.push(place);
   }
 
-  console.log(`Created ${places.length} places`);
   return places;
 };

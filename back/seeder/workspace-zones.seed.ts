@@ -28,6 +28,5 @@ export const createWorkspaceZones = async (
     workspaceZones.push(workspaceZone);
   }
 
-  console.log(`Created ${workspaceZones.length} workspace zones`);
   return workspaceZones;
 };

@@ -24,6 +24,5 @@ export const createWorkspaces = async (quantity: number, userIds: number[]) => {
     workspaces.push(workspace);
   }
 
-  console.log(`Created ${workspaces.length} workspaces`);
   return workspaces;
 };

@@ -33,6 +33,5 @@ export const createBookings = async (
     bookings.push(booking);
   }
 
-  console.log(`Created ${bookings.length} bookings`);
   return bookings;
 };

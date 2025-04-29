@@ -10,18 +10,28 @@ import { createBookings } from './bookings.seed';
 dotenv.config();
 const prisma = new PrismaClient();
 
+// Функция для измерения времени выполнения
+const measureTime = async (operation: string, fn: () => Promise<any>) => {
+  const startTime = Date.now();
+  const result = await fn();
+  const endTime = Date.now();
+  const duration = (endTime - startTime) / 1000;
+  console.log(`✅ ${operation} выполнено за ${duration.toFixed(2)} секунд`);
+  return result;
+};
+
 async function main() {
   console.log('Start seeding...');
+  const totalStartTime = Date.now();
 
   console.log('Создание ролей...');
-  // await createRoles();
+  // await measureTime('Создание ролей', createRoles);
   console.log('Роли созданы успешно');
 
   console.log('Создание пользователей...');
-  // await createUsers(100000);
-  console.log('Пользователи созданы успешно');
-
+  // const users = await measureTime('Создание пользователей', () => createUsers(100000));
   const users = await prisma.user.findMany();
+  console.log('Пользователи созданы успешно');
 
   const ownerIds = users
     .map((user) => {
@@ -32,26 +42,30 @@ async function main() {
     .filter((id): id is number => id !== undefined);
 
   console.log('Создание коворкингов...');
-  await createWorkspaces(200000, ownerIds);
+  await measureTime('Создание коворкингов', () =>
+    createWorkspaces(200000, ownerIds),
+  );
   console.log('Коворкинги созданы успешно');
 
   const workspaces = await prisma.workspace.findMany();
-
   const workspaceIds = workspaces.map((workspace) => workspace.id);
 
   console.log('Создание зон коворкингов...');
-  await createWorkspaceZones(500000, workspaceIds);
+  await measureTime('Создание зон коворкингов', () =>
+    createWorkspaceZones(500000, workspaceIds),
+  );
   console.log('Зоны коворкингов созданы успешно');
 
   const workspaceZones = await prisma.workspaceZone.findMany();
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
   console.log('Создание рабочих мест...');
-  await createPlaces(1000000, zoneIds);
+  await measureTime('Создание рабочих мест', () =>
+    createPlaces(1000000, zoneIds),
+  );
   console.log('Рабочие места созданы успешно');
 
   const places = await prisma.place.findMany();
-
   const placeIds = places.map((place) => place.id);
 
   const clientIds = users
@@ -63,10 +77,16 @@ async function main() {
     .filter((id): id is number => id !== undefined);
 
   console.log('Создание бронирований...');
-  await createBookings(5000000, clientIds, placeIds);
+  await measureTime('Создание бронирований', () =>
+    createBookings(5000000, clientIds, placeIds),
+  );
   console.log('Бронирования созданы успешно');
 
-  console.log('Seeding completed successfully!');
+  const totalEndTime = Date.now();
+  const totalDuration = (totalEndTime - totalStartTime) / 1000;
+  console.log(
+    `🎉 Seeding completed successfully in ${totalDuration.toFixed(2)} seconds!`,
+  );
 }
 
 main()

@@ -36,6 +36,5 @@ export const createRoles = async () => {
     roles.push(role);
   }
 
-  console.log(`Created ${roles.length} roles`);
   return roles;
 };

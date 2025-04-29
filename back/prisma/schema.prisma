@@ -9,17 +9,17 @@ datasource db {
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  email      String      @unique
-  firstName  String      @map("first_name")
-  lastName   String      @map("last_name")
-  middleName String?     @map("middle_name")
-  phone      String      @map("phone")
-  password   String
-  roleId     Int         @map("role_id")
-  bookings   Booking[]
-  role       Role        @relation(fields: [roleId], references: [id])
-  workspaces Workspace[]
+  id                Int                @id @default(autoincrement())
+  email             String             @unique
+  firstName         String             @map("first_name")
+  lastName          String             @map("last_name")
+  middleName        String?            @map("middle_name")
+  phone             String             @map("phone")
+  password          String
+  roleId            Int                @map("role_id")
+  bookings          Booking[]
+  role              Role               @relation(fields: [roleId], references: [id])
+  workspaces        Workspace[]
   managedWorkspaces WorkspaceManager[]
 
   @@map("user")
@@ -35,17 +35,17 @@ model Role {
 }
 
 model Workspace {
-  id          Int             @id @default(autoincrement())
+  id          Int                @id @default(autoincrement())
   name        String
   address     String
   description String?
   capacity    Int
   amenities   String?
-  approved    Boolean         @default(false)
-  ownerId     Int             @map("owner_id")
-  owner       User            @relation(fields: [ownerId], references: [id])
-  zones       WorkspaceZone[]
+  approved    Boolean            @default(false)
+  ownerId     Int                @map("owner_id")
+  owner       User               @relation(fields: [ownerId], references: [id])
   managers    WorkspaceManager[]
+  zones       WorkspaceZone[]
 
   @@map("workspace")
 }
@@ -94,8 +94,8 @@ model WorkspaceManager {
   managerId   Int       @map("manager_id")
   createdAt   DateTime  @default(now()) @map("created_at")
   deletedAt   DateTime? @map("deleted_at")
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
   manager     User      @relation(fields: [managerId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
   @@id([workspaceId, managerId])
   @@map("workspace_manager")

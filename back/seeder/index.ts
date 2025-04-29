@@ -13,15 +13,16 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  // Создание ролей
-  await createRoles();
-  console.log('Roles created successfully');
+  console.log('Создание ролей...');
+  // await createRoles();
+  console.log('Роли созданы успешно');
 
-  // Создание пользователей с ID ролей
-  const users = await createUsers(100);
+  console.log('Создание пользователей...');
+  // await createUsers(100000);
   console.log('Пользователи созданы успешно');
 
-  // Извлечение ID пользователей для создания коворкинга
+  const users = await prisma.user.findMany();
+
   const ownerIds = users
     .map((user) => {
       if (user.roleId === 2) {
@@ -30,25 +31,27 @@ async function main() {
     })
     .filter((id): id is number => id !== undefined);
 
-  // Создание коворкингов с ID пользователей
-  const workspaces = await createWorkspaces(50, ownerIds);
+  console.log('Создание коворкингов...');
+  await createWorkspaces(200000, ownerIds);
   console.log('Коворкинги созданы успешно');
 
-  // Извлечение ID коворкингов для создания зон
+  const workspaces = await prisma.workspace.findMany();
+
   const workspaceIds = workspaces.map((workspace) => workspace.id);
 
-  // Создание зон коворкингов с ID коворкингов
-  const workspaceZones = await createWorkspaceZones(100, workspaceIds);
+  console.log('Создание зон коворкингов...');
+  await createWorkspaceZones(500000, workspaceIds);
   console.log('Зоны коворкингов созданы успешно');
 
-  // Извлечение ID зон для создания рабочих мест
+  const workspaceZones = await prisma.workspaceZone.findMany();
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
-  // Создание рабочих мест с ID зон
-  const places = await createPlaces(200, zoneIds);
+  console.log('Создание рабочих мест...');
+  await createPlaces(1000000, zoneIds);
   console.log('Рабочие места созданы успешно');
 
-  // Извлечение ID рабочих мест для создания бронирований
+  const places = await prisma.place.findMany();
+
   const placeIds = places.map((place) => place.id);
 
   const clientIds = users
@@ -59,8 +62,8 @@ async function main() {
     })
     .filter((id): id is number => id !== undefined);
 
-  // Создание бронирований с ID пользователей и ID рабочих мест
-  await createBookings(300, clientIds, placeIds);
+  console.log('Создание бронирований...');
+  await createBookings(5000000, clientIds, placeIds);
   console.log('Бронирования созданы успешно');
 
   console.log('Seeding completed successfully!');

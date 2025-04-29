@@ -6,46 +6,53 @@
       "script": "dev",
       "path": "front",
       "problemMatcher": [],
-      "label": "front",
-      "icon": { "color": "terminal.ansiRed", "id": "browser" },
-      "detail": "nuxt dev"
+      "label": "FRONT",
+      "icon": { "color": "terminal.ansiRed", "id": "browser" }
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "path": "back",
+      "problemMatcher": [],
+      "label": "BUILD",
+      "icon": { "color": "terminal.ansiGreen", "id": "hammer" }
     },
     {
       "type": "npm",
       "script": "start:dev",
       "path": "back",
       "problemMatcher": [],
-      "label": "back",
-      "icon": { "color": "terminal.ansiGreen", "id": "server" },
-      "detail": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --prefix \"[{name}]\" --names \"API,AUTH\" \"cross-env NODE_ENV=development nest start api --watch\" \"nest start auth --watch\""
+      "label": "BACK",
+      "icon": { "color": "terminal.ansiGreen", "id": "server" }
     },
     {
       "type": "shell",
       "command": "cd back && npx prisma studio",
       "problemMatcher": [],
-      "label": "db-view",
-      "icon": { "color": "terminal.ansiBlue", "id": "database" },
-      "detail": "Prisma Studio"
+      "label": "DB-VIEW",
+      "icon": { "color": "terminal.ansiBlue", "id": "database" }
     },
     {
-      "label": "back and db view",
+      "label": "BACK AND DB-VIEW",
       "dependsOn": ["back", "db-view"],
       "dependsOrder": "parallel",
       "problemMatcher": [],
       "group": {
         "kind": "build",
         "isDefault": true
-      }
+      },
+      "icon": { "color": "terminal.ansiMagenta", "id": "rocket" }
     },
     {
-      "label": "Run front and back",
+      "label": "RUN FRONT AND BACK",
       "dependsOn": ["front", "back"],
       "dependsOrder": "parallel",
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "icon": { "color": "terminal.ansiYellow", "id": "play" }
     }
   ]
 }

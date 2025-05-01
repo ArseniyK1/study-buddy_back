@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-gray-900">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <!-- Loading Spinner for Workspace -->
       <div v-if="!workspace.id" class="flex justify-center items-center h-64">
         <div
@@ -93,8 +93,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import api from "~/services/api";
-import ZoneCard from "~/components/workspace/ZoneCard.vue";
+import api from "@/services/api";
+import ZoneCard from "@/components/workspace/ZoneCard.vue";
 
 interface Workspace {
   id: number;

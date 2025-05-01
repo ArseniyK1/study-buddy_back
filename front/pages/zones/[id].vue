@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-gray-900">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <!-- Loading Spinner -->
       <div v-if="!zone.id" class="flex justify-center items-center h-64">
         <div
@@ -32,32 +32,7 @@
       </div>
 
       <!-- Interactive Layout -->
-      <div class="bg-gray-800 rounded-lg shadow border border-gray-700 p-6">
-        <h2 class="text-xl font-semibold text-gray-200 mb-6">
-          Планировка зала
-        </h2>
-
-        <!-- Loading Spinner for Places -->
-        <div
-          v-if="!places.length"
-          class="flex justify-center items-center h-32"
-        >
-          <div
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"
-          ></div>
-        </div>
-
-        <div v-else class="grid grid-cols-4 gap-4">
-          <WorkplaceCard
-            v-for="place in places"
-            :key="place.id"
-            :id="place.id"
-            :name="place.name"
-            :status="place.status"
-            :zone-id="zone.id"
-          />
-        </div>
-      </div>
+      <WorkplaceList :places="places" :zone-id="zone.id" />
     </div>
   </div>
 </template>
@@ -65,8 +40,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
-import api from "~/services/api";
-import WorkplaceCard from "~/components/workspace/WorkplaceCard.vue";
+import api from "@/services/api";
+import WorkplaceList from "@/components/workplaces/WorkplaceList.vue";
 
 interface Zone {
   id: number;
@@ -80,7 +55,7 @@ interface Zone {
 interface Place {
   id: number;
   name: string;
-  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+  status: "AVAILABLE" | "BOOKED" | "MAINTENANCE";
 }
 
 const route = useRoute();
@@ -92,7 +67,7 @@ const availablePlaces = computed(() => {
 });
 
 const occupiedPlaces = computed(() => {
-  return places.value.filter((place) => place.status === "OCCUPIED").length;
+  return places.value.filter((place) => place.status === "BOOKED").length;
 });
 
 onMounted(async () => {

@@ -234,8 +234,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useAuthStore } from "~/stores/auth";
-import { useSearchStore } from "~/stores/search";
+import { useAuthStore } from "@/stores/auth";
+import { useSearchStore } from "@/stores/search";
 import { useRouter } from "vue-router";
 import {
   HomeIcon,

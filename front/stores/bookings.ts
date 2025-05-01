@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import api from "~/services/api";
-import { withPagination } from "~/helpers/api";
+import api from "@/services/api";
+import { withPagination } from "@/helpers/api";
 
 interface Booking {
   id: number;

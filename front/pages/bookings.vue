@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-900 py-8">
+  <div class="bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-bold text-gray-200">Мои бронирования</h1>
@@ -37,12 +37,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
-import { useBookingsStore } from "~/stores/bookings";
-import { useSearchStore } from "~/stores/search";
+import { useBookingsStore } from "@/stores/bookings";
+import { useSearchStore } from "@/stores/search";
 import { debounce } from "lodash";
-import BookingList from "~/components/booking/BookingList.vue";
+import BookingList from "@/components/booking/BookingList.vue";
 import { format } from "date-fns";
-import DatePicker from "~/components/common/DatePicker.vue";
+import DatePicker from "@/components/common/DatePicker.vue";
 
 const bookingsStore = useBookingsStore();
 const searchStore = useSearchStore();

@@ -69,9 +69,9 @@
 <script setup lang="ts">
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { useBookingsStore } from "~/stores/bookings";
+import { useBookingsStore } from "@/stores/bookings";
 import { ref } from "vue";
-import Modal from "~/components/ui/Modal.vue";
+import Modal from "@/components/ui/Modal.vue";
 
 const props = defineProps<{
   booking: {

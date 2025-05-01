@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { WorkspaceZoneService } from './workspace-zone.service';
 import { CreateWorkspaceZoneDto } from './dto/create-workspace-zone.dto';
@@ -19,27 +20,27 @@ export class WorkspaceZoneController {
   constructor(private readonly workspaceZoneService: WorkspaceZoneService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new workspace zone' })
+  @ApiOperation({ summary: 'Создать зону внутри коворкинга' })
   create(@Body() createWorkspaceZoneDto: CreateWorkspaceZoneDto) {
     return this.workspaceZoneService.create(createWorkspaceZoneDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all workspace zones' })
-  findAll() {
-    return this.workspaceZoneService.findAll();
+  @ApiOperation({ summary: 'Получить все зоны' })
+  findAll(@Query('workspaceId') workspaceId: number) {
+    return this.workspaceZoneService.findAll(+workspaceId);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a workspace zone by id' })
-  @ApiParam({ name: 'id', description: 'Workspace Zone ID' })
+  @ApiOperation({ summary: 'Получить зону по id' })
+  @ApiParam({ name: 'id', description: 'ID зоны' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.workspaceZoneService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a workspace zone' })
-  @ApiParam({ name: 'id', description: 'Workspace Zone ID' })
+  @ApiOperation({ summary: 'Обновить зону' })
+  @ApiParam({ name: 'id', description: 'ID зоны' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateWorkspaceZoneDto: UpdateWorkspaceZoneDto,
@@ -48,8 +49,8 @@ export class WorkspaceZoneController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a workspace zone' })
-  @ApiParam({ name: 'id', description: 'Workspace Zone ID' })
+  @ApiOperation({ summary: 'Удалить зону' })
+  @ApiParam({ name: 'id', description: 'ID зоны' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.workspaceZoneService.remove(id);
   }

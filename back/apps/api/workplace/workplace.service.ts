@@ -35,8 +35,11 @@ export class WorkplaceService {
     });
   }
 
-  async findAll() {
+  async findAll(zoneId: number) {
     return this.prisma.place.findMany({
+      where: {
+        zoneId,
+      },
       include: {
         zone: true,
       },

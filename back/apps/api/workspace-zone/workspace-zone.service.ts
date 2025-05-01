@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { CreateWorkspaceZoneDto } from './dto/create-workspace-zone.dto';
 import { UpdateWorkspaceZoneDto } from './dto/update-workspace-zone.dto';
@@ -23,8 +27,14 @@ export class WorkspaceZoneService {
     });
   }
 
-  async findAll() {
+  async findAll(workspaceId: number) {
+    if (!workspaceId) {
+      throw new BadRequestException('Необходимо указать ID коворкинга');
+    }
     return this.prisma.workspaceZone.findMany({
+      where: {
+        workspaceId,
+      },
       include: {
         workspace: true,
         places: true,

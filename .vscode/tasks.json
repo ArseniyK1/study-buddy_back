@@ -34,7 +34,7 @@
     },
     {
       "label": "BACK AND DB-VIEW",
-      "dependsOn": ["back", "db-view"],
+      "dependsOn": ["BACK", "DB-VIEW"],
       "dependsOrder": "parallel",
       "problemMatcher": [],
       "group": {
@@ -45,7 +45,7 @@
     },
     {
       "label": "RUN FRONT AND BACK",
-      "dependsOn": ["front", "back"],
+      "dependsOn": ["FRONT", "BACK"],
       "dependsOrder": "parallel",
       "group": {
         "kind": "build",

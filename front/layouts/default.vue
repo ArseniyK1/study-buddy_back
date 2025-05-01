@@ -1,20 +1,24 @@
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full bg-gray-900">
     <!-- Navigation Drawer -->
     <div
-      class="fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-30"
+      class="fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-50"
       :class="{ 'translate-x-0': isDrawerOpen }"
     >
-      <div class="h-full w-64 bg-white shadow-lg flex flex-col">
+      <div
+        class="h-full w-64 bg-gray-800 shadow-lg flex flex-col border-r border-gray-700"
+      >
         <div class="flex flex-col h-full">
-          <div class="p-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-gray-800">Меню</h2>
+          <div
+            class="p-4 border-b border-gray-700 flex justify-between items-center"
+          >
+            <h2 class="text-lg font-semibold text-gray-200">Меню</h2>
             <button
               @click="toggleDrawer"
-              class="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              class="p-2 rounded-lg hover:bg-gray-700"
             >
               <svg
-                class="h-5 w-5 text-gray-600"
+                class="h-5 w-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -33,10 +37,11 @@
               <li v-for="item in navigationItems" :key="item.name">
                 <NuxtLink
                   :to="item.to"
-                  class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  @click="toggleDrawer"
+                  class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <component :is="item.icon" class="h-5 w-5 mr-3" />
-                  {{ item.name }}asd
+                  {{ item.name }}
                 </NuxtLink>
               </li>
             </ul>
@@ -66,13 +71,14 @@
       </div>
     </div>
 
-    <!-- Toggle Button for Mobile -->
+    <!-- Toggle Button -->
     <button
       @click="toggleDrawer"
-      class="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg md:hidden hover:bg-gray-100"
+      class="fixed top-4 left-4 z-50 p-2 rounded-lg bg-gray-800 shadow-lg hover:bg-gray-700 transition-opacity duration-200"
+      :class="{ 'opacity-0 pointer-events-none': isDrawerOpen }"
     >
       <svg
-        class="h-6 w-6 text-gray-600"
+        class="h-6 w-6 text-gray-400"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -86,25 +92,21 @@
       </svg>
     </button>
 
-    <!-- Overlay -->
-    <div
-      v-if="isDrawerOpen"
-      class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-      @click="toggleDrawer"
-    ></div>
-
     <!-- Main Content -->
     <div class="flex-1">
-      <div class="min-h-screen bg-gray-50">
+      <div class="min-h-screen bg-gray-900">
         <!-- Header -->
-        <header class="bg-white shadow">
+        <header class="bg-gray-800 shadow sticky top-0 z-10">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <!-- Site Name -->
               <div class="flex-shrink-0">
-                <h1 class="text-2xl font-bold text-indigo-600">
+                <h1 class="text-2xl font-bold text-indigo-400 hidden md:block">
                   Коворкинг.Онлайн
                 </h1>
+                <BuildingOffice2Icon
+                  class="h-8 w-8 text-indigo-400 md:hidden"
+                />
               </div>
 
               <!-- Search -->
@@ -113,7 +115,7 @@
                   <input
                     type="text"
                     placeholder="Поиск..."
-                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    class="w-full pl-10 pr-4 py-2 border border-gray-700 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   <div
                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
@@ -137,27 +139,60 @@
 
               <!-- User Profile -->
               <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-2">
-                  <div
-                    class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center"
+                <div class="relative">
+                  <button
+                    @click="isUserMenuOpen = !isUserMenuOpen"
+                    class="flex items-center space-x-2 focus:outline-none"
                   >
-                    <svg
-                      class="h-5 w-5 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <div
+                      class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                      <svg
+                        class="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-300">{{
+                      user?.email
+                    }}</span>
+                  </button>
+
+                  <!-- User Menu Dropdown -->
+                  <div
+                    v-if="isUserMenuOpen"
+                    class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700"
+                  >
+                    <NuxtLink
+                      to="/profile"
+                      class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      <UserIcon class="h-5 w-5 mr-2" />
+                      Профиль
+                    </NuxtLink>
+                    <NuxtLink
+                      to="/settings"
+                      class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                    >
+                      <CogIcon class="h-5 w-5 mr-2" />
+                      Настройки
+                    </NuxtLink>
+                    <button
+                      @click="handleLogout"
+                      class="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+                    >
+                      <ArrowRightOnRectangleIcon class="h-5 w-5 mr-2" />
+                      Выйти
+                    </button>
                   </div>
-                  <span class="text-sm font-medium text-gray-700">{{
-                    user?.email
-                  }}</span>
                 </div>
               </div>
             </div>
@@ -174,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "~/stores/auth";
 import { useRouter } from "vue-router";
 import {
@@ -184,12 +219,16 @@ import {
   CogIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
+  BuildingOffice2Icon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
 const router = useRouter();
 const user = computed(() => authStore.user);
 const isDrawerOpen = ref(false);
+const isUserMenuOpen = ref(false);
 
 const toggleDrawer = () => {
   isDrawerOpen.value = !isDrawerOpen.value;
@@ -201,9 +240,15 @@ const handleLogout = async () => {
 };
 
 const navigationItems = computed(() => {
+  enum Role {
+    USER = "USER",
+    MANAGER = "MANAGER",
+    ADMIN = "ADMIN",
+    SUPER_ADMIN = "SUPER_ADMIN",
+  }
   const role = user.value?.role?.value;
 
-  const commonItems = [{ name: "Главная", to: "/", icon: HomeIcon }];
+  const commonItems = [{ name: "Главная", to: "/hello", icon: HomeIcon }];
 
   const clientItems = [
     { name: "Мои бронирования", to: "/bookings", icon: CalendarIcon },
@@ -221,14 +266,32 @@ const navigationItems = computed(() => {
   ];
 
   switch (role) {
-    case "client":
+    case Role.USER:
       return [...commonItems, ...clientItems];
-    case "manager":
+    case Role.MANAGER:
       return [...commonItems, ...managerItems];
-    case "admin":
+    case Role.ADMIN:
+      return [...commonItems, ...adminItems];
+    case Role.SUPER_ADMIN:
       return [...commonItems, ...adminItems];
     default:
       return commonItems;
   }
+});
+
+// Close menu when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".relative")) {
+    isUserMenuOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
 });
 </script>

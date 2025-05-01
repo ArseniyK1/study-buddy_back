@@ -75,14 +75,17 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
+
 definePageMeta({
   layout: "auth",
 });
 
 const router = useRouter();
 const authStore = useAuthStore();
-// const email = ref("Celine.Ullrich23@gmail.com");
-const email = ref("Maximillia31@gmail.com");
+const email = ref("Lane.Price@yahoo.com");
 const password = ref("test");
 const loading = ref(false);
 const error = ref("");

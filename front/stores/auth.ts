@@ -1,12 +1,18 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "../services/api";
+import { useToast } from "vue-toastification";
+
+interface ApiError extends Error {
+  message: string;
+}
 
 export const useAuthStore = defineStore("auth", () => {
   const accessToken = ref<string | null>(null);
   const refreshToken = ref<string | null>(null);
   const user = ref<any | null>(null);
   const isInitialized = ref(false);
+  const toast = useToast();
 
   const isAuthenticated = computed(() => !!accessToken.value);
   const getProfileComputed = computed(() => user.value);
@@ -31,10 +37,8 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function initialize() {
-    // Уже инициализирован
     if (isInitialized.value) return;
 
-    // Только на клиенте
     if (process.client) {
       const storedAccess = localStorage.getItem("accessToken");
       const storedRefresh = localStorage.getItem("refreshToken");
@@ -46,6 +50,7 @@ export const useAuthStore = defineStore("auth", () => {
           await fetchUser();
         } catch (error) {
           console.error("Failed to fetch user:", error);
+          toast.error((error as ApiError).message || "Failed to fetch user");
           logout();
         }
       }
@@ -55,20 +60,33 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function signIn(email: string, password: string) {
-    const { data } = await api.post("/auth/sign-in", {
-      email,
-      password,
-    });
-    setTokens(data.accessToken, data.refreshToken);
-    await fetchUser();
-    return data;
+    try {
+      const { data } = await api.post("/auth/sign-in", {
+        email,
+        password,
+      });
+      console.log("Data:", data);
+      setTokens(data.accessToken, data.refreshToken);
+      await fetchUser();
+      return data;
+    } catch (error) {
+      toast.error("Неправильный email и/или пароль");
+      throw error;
+    }
   }
 
   async function fetchUser() {
     if (!accessToken.value) return null;
-    const { data } = await api.post("/auth/profile");
-    setUser(data);
-    return data;
+    try {
+      const { data } = await api.post("/auth/profile");
+      setUser(data);
+      return data;
+    } catch (error) {
+      toast.error(
+        (error as ApiError).message || "Failed to fetch user profile"
+      );
+      throw error;
+    }
   }
 
   function logout() {

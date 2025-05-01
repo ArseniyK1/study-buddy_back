@@ -27,6 +27,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/auth/tsconfig.app.json"
       }
+    },
+    "smtp": {
+      "type": "application",
+      "root": "apps/smtp",
+      "entryFile": "main",
+      "sourceRoot": "apps/smtp",
+      "compilerOptions": {
+        "tsConfigPath": "apps/smtp/tsconfig.app.json"
+      }
     }
   }
 }

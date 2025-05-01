@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   Request,
+  Query,
 } from '@nestjs/common';
 import { WorkplaceService } from './workplace.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -15,7 +16,13 @@ import { UpdatePlaceDto } from './dto/update-place.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { PlaceResponseDto } from './dto/place-response.dto';
 import { BookingResponseDto } from './dto/booking-response.dto';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
 
 @ApiTags('Рабочее место (Workplace)')
@@ -34,8 +41,9 @@ export class WorkplaceController {
 
   @Get()
   @ApiOperation({ summary: 'Получить все рабочие места' })
-  findAll(): Promise<PlaceResponseDto[] | any> {
-    return this.workplaceService.findAll();
+  @ApiQuery({ name: 'zoneId', type: Number, required: false })
+  findAll(@Query('zoneId') zoneId: number): Promise<PlaceResponseDto[] | any> {
+    return this.workplaceService.findAll(+zoneId);
   }
 
   @Get(':id')

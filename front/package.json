@@ -8,8 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "generate-proto": "ts-node scripts/generate-proto.ts",
-    "generate-grpc-web": "ts-node scripts/generate-grpc-web.ts"
+    "generate-proto": "ts-node scripts/generate-proto.ts"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
@@ -29,6 +28,7 @@
     "protobufjs": "^7.2.6",
     "rxjs": "^7.8.1",
     "vue": "^3.4.19",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vue-toastification": "^2.0.0-rc.5"
   }
 }

@@ -1,81 +1,135 @@
 <template>
   <div>
-    <!-- Loading State -->
-    <div
-      v-if="loading && !isLoadingMore"
-      class="flex justify-center items-center h-64"
-    >
+    <div v-if="loading" class="flex justify-center items-center h-64">
       <div
-        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400"
       ></div>
     </div>
 
-    <!-- Error State -->
-    <div
-      v-else-if="error"
-      class="bg-red-500/10 border border-red-500/20 rounded-lg p-4"
-    >
-      <p class="text-red-400">{{ error }}</p>
+    <div v-else-if="error" class="text-red-400 text-center py-4">
+      {{ error }}
     </div>
 
-    <!-- Empty State -->
     <div
-      v-else-if="bookings.length === 0 && !loading"
-      class="text-center py-12"
+      v-else-if="bookings.length === 0"
+      class="text-gray-400 text-center py-4"
     >
-      <svg
-        class="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        ></path>
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-200">Нет бронирований</h3>
-      <p class="mt-1 text-sm text-gray-400">
-        У вас пока нет активных бронирований.
-      </p>
+      Бронирования не найдены
     </div>
 
-    <!-- Bookings List -->
-    <div v-else class="grid gap-6">
-      <BookingCard
+    <div v-else class="space-y-4">
+      <div
         v-for="booking in bookings"
         :key="booking.id"
-        :booking="booking"
-        @booking-cancelled="handleBookingCancelled"
-      />
-    </div>
+        class="bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-700"
+      >
+        <div class="px-6 py-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-medium text-gray-200">
+                {{ booking.place.name }}
+              </h3>
+              <p class="text-sm text-gray-400">
+                {{ booking.place.zone.name }}
+              </p>
+            </div>
+            <div class="text-right">
+              <span
+                :class="[
+                  'px-2 py-1 text-xs font-medium rounded-full',
+                  {
+                    'bg-green-900 text-green-300':
+                      booking.status === 'COMPLETED',
+                    'bg-red-900 text-red-300': booking.status === 'CANCELLED',
+                    'bg-yellow-900 text-yellow-300':
+                      booking.status === 'PENDING',
+                  },
+                ]"
+              >
+                {{ getStatusText(booking.status) }}
+              </span>
+            </div>
+          </div>
 
-    <!-- Loading More Indicator -->
-    <div v-if="isLoadingMore" class="flex justify-center items-center py-4">
-      <div
-        class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"
-      ></div>
+          <div class="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-400">Время начала</p>
+              <p class="text-gray-200">
+                {{ formatDate(booking.startTime) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">Время окончания</p>
+              <p class="text-gray-200">
+                {{ formatDate(booking.endTime) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-between items-center">
+            <div class="text-lg font-medium text-gray-200">
+              {{ booking.totalPrice }} ₽
+            </div>
+            <button
+              v-if="booking.status === 'PENDING'"
+              @click="handleCancel(booking.id)"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Отменить
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import BookingCard from "./BookingCard.vue";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+
+interface Booking {
+  id: number;
+  startTime: string;
+  endTime: string;
+  status: string;
+  totalPrice: number;
+  place: {
+    name: string;
+    zone: {
+      name: string;
+    };
+  };
+}
 
 const props = defineProps<{
-  bookings: any[];
+  bookings: Booking[];
   loading: boolean;
   error: string | null;
-  isLoadingMore: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: "booking-cancelled"): void;
+  (e: "booking-cancelled", bookingId: number): void;
 }>();
 
-const handleBookingCancelled = () => {
-  emit("booking-cancelled");
+const formatDate = (date: string) => {
+  return format(new Date(date), "d MMMM yyyy, HH:mm", { locale: ru });
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case "COMPLETED":
+      return "Завершено";
+    case "CANCELLED":
+      return "Отменено";
+    case "PENDING":
+      return "Ожидает";
+    default:
+      return status;
+  }
+};
+
+const handleCancel = (bookingId: number) => {
+  emit("booking-cancelled", bookingId);
 };
 </script>

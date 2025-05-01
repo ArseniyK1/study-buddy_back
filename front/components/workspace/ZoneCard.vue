@@ -20,6 +20,7 @@
             <p>Всего мест: {{ zone.maxPlaces }}</p>
             <p class="text-green-400">Свободно: {{ availablePlaces }}</p>
             <p class="text-red-400">Занято: {{ occupiedPlaces }}</p>
+            <p class="text-gray-400">Недоступно: {{ maintenancePlaces }}</p>
           </div>
         </div>
       </div>
@@ -78,6 +79,13 @@ const occupiedPlaces = computed(() => {
   return (
     props.zone.places?.filter((place) => place.status === "OCCUPIED").length ||
     0
+  );
+});
+
+const maintenancePlaces = computed(() => {
+  return (
+    props.zone.places?.filter((place) => place.status === "MAINTENANCE")
+      .length || 0
   );
 });
 

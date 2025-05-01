@@ -26,6 +26,9 @@
               <p>Всего мест: {{ zone.maxPlaces }}</p>
               <p class="text-green-400">Свободно: {{ availablePlaces }}</p>
               <p class="text-red-400">Занято: {{ occupiedPlaces }}</p>
+              <p class="text-gray-400">
+                В обслуживании: {{ maintenancePlaces }}
+              </p>
             </div>
           </div>
         </div>
@@ -68,6 +71,10 @@ const availablePlaces = computed(() => {
 
 const occupiedPlaces = computed(() => {
   return places.value.filter((place) => place.status === "BOOKED").length;
+});
+
+const maintenancePlaces = computed(() => {
+  return places.value.filter((place) => place.status === "MAINTENANCE").length;
 });
 
 onMounted(async () => {

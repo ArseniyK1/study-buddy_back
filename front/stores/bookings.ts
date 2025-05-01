@@ -34,7 +34,6 @@ export const useBookingsStore = defineStore("bookings", () => {
   const bookings = ref<Booking[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const totalCount = ref(0);
   const currentPage = ref(1);
   const pageSize = ref(20);
   const hasMore = ref(true);
@@ -43,32 +42,24 @@ export const useBookingsStore = defineStore("bookings", () => {
     params: GetMyBookingsParams = {},
     reset = false
   ) => {
-    if (loading.value || (!hasMore.value && !reset)) return;
+    if (loading.value) return;
 
     loading.value = true;
     error.value = null;
     try {
       if (reset) {
-        currentPage.value = 1;
         hasMore.value = true;
-      } else {
-        currentPage.value++;
       }
 
-      const { data, headers } = await api.get<Booking[]>("/booking", {
-        params: withPagination(params, {
-          page: currentPage.value,
-          pageSize: pageSize.value,
-        }),
+      const { data } = await api.get<Booking[]>("/booking", {
+        params: {
+          ...params,
+          offset: params.offset ?? (currentPage.value - 1) * pageSize.value,
+          limit: params.limit ?? pageSize.value,
+        },
       });
 
-      if (reset) {
-        bookings.value = data;
-      } else {
-        bookings.value = [...bookings.value, ...data];
-      }
-
-      totalCount.value = parseInt(headers["x-total-count"] || "0");
+      bookings.value = data;
       hasMore.value = data.length === pageSize.value;
     } catch (err) {
       error.value = "Failed to fetch bookings";
@@ -127,7 +118,6 @@ export const useBookingsStore = defineStore("bookings", () => {
     bookings,
     loading,
     error,
-    totalCount,
     currentPage,
     pageSize,
     hasMore,

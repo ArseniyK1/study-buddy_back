@@ -10,6 +10,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { WorkspaceZoneModule } from './workspace-zone/workspace-zone.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { RolesGuard } from './auth/guard/roles.guard';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RolesGuard } from './auth/guard/roles.guard';
     PrismaModule,
     WorkspaceZoneModule,
     WorkspaceModule,
+    BookingModule,
   ],
   providers: [
     {

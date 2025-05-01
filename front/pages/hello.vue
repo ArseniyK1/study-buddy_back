@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-200">
-          Hello, {{ user?.firstName }}!
+          Добрый день, {{ user?.firstName }}!
         </h1>
       </div>
 

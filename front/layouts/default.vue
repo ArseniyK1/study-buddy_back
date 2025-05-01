@@ -100,15 +100,18 @@
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <!-- Site Name -->
-              <div class="flex-shrink-0">
-                <h1 class="text-2xl font-bold text-indigo-400 hidden md:block">
-                  Коворкинг.Онлайн
-                </h1>
-                <BuildingOffice2Icon
-                  class="h-8 w-8 text-indigo-400 md:hidden"
-                />
-              </div>
-
+              <NuxtLink to="/hello">
+                <div class="flex-shrink-0">
+                  <h1
+                    class="text-2xl font-bold text-indigo-400 hidden md:block"
+                  >
+                    Коворкинг.Онлайн
+                  </h1>
+                  <BuildingOffice2Icon
+                    class="h-8 w-8 text-indigo-400 md:hidden"
+                  />
+                </div>
+              </NuxtLink>
               <!-- Search -->
               <div class="flex-1 max-w-2xl mx-4">
                 <div class="relative">

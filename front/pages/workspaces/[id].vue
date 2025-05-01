@@ -1,8 +1,18 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-900">
     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <!-- Loading Spinner for Workspace -->
+      <div v-if="!workspace.id" class="flex justify-center items-center h-64">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400"
+        ></div>
+      </div>
+
       <!-- Workspace Header -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div
+        v-else
+        class="bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-700"
+      >
         <img
           :src="
             workspace.image ||
@@ -14,26 +24,43 @@
         <div class="p-6">
           <div class="flex justify-between items-start">
             <div>
-              <h1 class="text-2xl font-bold text-gray-900">
+              <h1 class="text-2xl font-bold text-gray-200">
                 {{ workspace.name }}
               </h1>
-              <p class="mt-2 text-gray-600">{{ workspace.description }}</p>
+              <p class="mt-2 text-gray-400">{{ workspace.description }}</p>
             </div>
             <div class="text-right">
-              <p class="text-sm text-gray-500">Статус</p>
-              <p
-                class="text-lg font-semibold"
-                :class="{
-                  'text-green-600': workspace.status === 'APPROVED',
-                  'text-yellow-600': workspace.status === 'PENDING',
-                }"
-              >
-                {{
-                  workspace.status === "APPROVED"
-                    ? "Одобрено"
-                    : "На рассмотрении"
-                }}
-              </p>
+              <p class="text-sm text-gray-400">Одобренно</p>
+              <div class="flex items-center justify-end space-x-2">
+                <svg
+                  v-if="workspace.approved"
+                  class="h-6 w-6 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  class="h-6 w-6 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -41,10 +68,21 @@
 
       <!-- Zones Section -->
       <div class="mt-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+        <h2 class="text-xl font-semibold text-gray-200 mb-6">
           Зоны коворкинга
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Loading Spinner for Zones -->
+        <div v-if="!zones.length" class="flex justify-center items-center h-32">
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"
+          ></div>
+        </div>
+
+        <div
+          v-else
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           <ZoneCard v-for="zone in zones" :key="zone.id" :zone="zone" />
         </div>
       </div>
@@ -63,7 +101,7 @@ interface Workspace {
   name: string;
   description: string;
   image?: string;
-  status: string;
+  approved: boolean;
 }
 
 interface Zone {

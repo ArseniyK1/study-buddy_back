@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import api from "~/services/api";
+import { withPagination } from "~/helpers/api";
 
 interface Booking {
   id: number;
@@ -26,6 +27,7 @@ interface GetMyBookingsParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+  query?: string;
 }
 
 export const useBookingsStore = defineStore("bookings", () => {
@@ -54,11 +56,10 @@ export const useBookingsStore = defineStore("bookings", () => {
       }
 
       const { data, headers } = await api.get<Booking[]>("/booking", {
-        params: {
-          offset: (currentPage.value - 1) * pageSize.value,
-          limit: pageSize.value,
-          ...params,
-        },
+        params: withPagination(params, {
+          page: currentPage.value,
+          pageSize: pageSize.value,
+        }),
       });
 
       if (reset) {
@@ -86,8 +87,13 @@ export const useBookingsStore = defineStore("bookings", () => {
     error.value = null;
     try {
       const { data } = await api.post<Booking>("/booking", bookingData);
-      bookings.value.push(data);
-      return data;
+      if (!!data?.id) {
+        bookings.value.push(data);
+        return data;
+      } else {
+        error.value = "Failed to create booking";
+        throw new Error("Failed to create booking");
+      }
     } catch (err) {
       error.value = "Failed to create booking";
       console.error(err);

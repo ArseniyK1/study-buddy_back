@@ -40,5 +40,6 @@ WHERE b.user_id = $1::bigint
         $4::text IS NULL
         OR b.end_time <= $4::timestamp
     )
-ORDER BY b.start_time DESC
+ORDER BY b.start_time,
+    b.id DESC
 LIMIT $6::bigint OFFSET $5::bigint;

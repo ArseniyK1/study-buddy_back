@@ -116,9 +116,11 @@
               <div class="flex-1 max-w-2xl mx-4">
                 <div class="relative">
                   <input
+                    v-model="searchQuery"
                     type="text"
                     placeholder="Поиск..."
-                    class="w-full pl-10 pr-4 py-2 border border-gray-700 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    @keyup.enter="handleSearch"
+                    class="w-full pl-10 pr-10 py-2 border border-gray-700 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   <div
                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
@@ -137,6 +139,25 @@
                       />
                     </svg>
                   </div>
+                  <button
+                    v-if="searchQuery"
+                    @click="clearSearch"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
@@ -212,8 +233,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useAuthStore } from "~/stores/auth";
+import { useSearchStore } from "~/stores/search";
 import { useRouter } from "vue-router";
 import {
   HomeIcon,
@@ -228,17 +250,19 @@ import {
 } from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
+const searchStore = useSearchStore();
 const router = useRouter();
 const user = computed(() => authStore.user);
 const isDrawerOpen = ref(false);
 const isUserMenuOpen = ref(false);
+const searchQuery = ref(searchStore.getSearchQuery());
 
 const toggleDrawer = () => {
   isDrawerOpen.value = !isDrawerOpen.value;
 };
 
 const handleLogout = async () => {
-  await authStore.logout();
+  authStore.logout();
   router.push("/login");
 };
 
@@ -290,8 +314,29 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
+const handleSearch = () => {
+  searchStore.setSearchQuery(searchQuery.value);
+};
+
+const clearSearch = () => {
+  searchQuery.value = "";
+  searchStore.setSearchQuery("");
+};
+
+// Синхронизация с URL при изменении маршрута
+watch(
+  () => searchStore.getSearchQuery(),
+  (newQuery) => {
+    if (newQuery !== searchQuery.value) {
+      searchQuery.value = newQuery;
+    }
+  }
+);
+
+// Синхронизация при монтировании
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  searchQuery.value = searchStore.getSearchQuery();
 });
 
 onUnmounted(() => {

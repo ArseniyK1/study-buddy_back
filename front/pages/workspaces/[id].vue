@@ -72,19 +72,11 @@
           Зоны коворкинга
         </h2>
 
-        <!-- Loading Spinner for Zones -->
-        <div v-if="!zones.length" class="flex justify-center items-center h-32">
-          <div
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"
-          ></div>
-        </div>
-
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <ZoneCard v-for="zone in zones" :key="zone.id" :zone="zone" />
-        </div>
+        <InfiniteList :fetch-items="fetchZones" :limit="20">
+          <template #default="{ items: zones }">
+            <ZoneCard v-for="zone in zones" :key="zone.id" :zone="zone" />
+          </template>
+        </InfiniteList>
       </div>
     </div>
   </div>
@@ -95,6 +87,7 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/services/api";
 import ZoneCard from "@/components/workspace/ZoneCard.vue";
+import InfiniteList from "@/components/common/InfiniteList.vue";
 
 interface Workspace {
   id: number;
@@ -114,7 +107,13 @@ interface Zone {
 
 const route = useRoute();
 const workspace = ref<Workspace>({} as Workspace);
-const zones = ref<Zone[]>([]);
+
+const fetchZones = async (offset: number, limit: number) => {
+  const { data } = await api.get<Zone[]>(
+    `/workspace-zones?workspaceId=${route.params.id}&offset=${offset}&limit=${limit}`
+  );
+  return data;
+};
 
 onMounted(async () => {
   try {
@@ -122,11 +121,6 @@ onMounted(async () => {
       `/workspaces/${route.params.id}`
     );
     workspace.value = workspaceData;
-
-    const { data: zonesData } = await api.get<Zone[]>(
-      `/workspace-zones?workspaceId=${route.params.id}`
-    );
-    zones.value = zonesData;
   } catch (error) {
     console.error("Failed to fetch workspace data:", error);
   }

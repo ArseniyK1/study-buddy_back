@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full bg-gray-900">
+  <div class="flex h-screen bg-gray-900 overflow-hidden">
     <!-- Navigation Drawer -->
     <div
       class="fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-50"
@@ -93,37 +93,80 @@
     </button>
 
     <!-- Main Content -->
-    <div class="flex-1">
-      <div class="min-h-screen bg-gray-900">
-        <!-- Header -->
-        <header class="bg-gray-800 shadow sticky top-0 z-10">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-              <!-- Site Name -->
-              <NuxtLink to="/hello">
-                <div class="flex-shrink-0">
-                  <h1
-                    class="text-2xl font-bold text-indigo-400 hidden md:block"
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <header class="bg-gray-800 shadow sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <!-- Site Name -->
+            <NuxtLink to="/hello">
+              <div class="flex-shrink-0">
+                <h1 class="text-2xl font-bold text-indigo-400 hidden md:block">
+                  Коворкинг.Онлайн
+                </h1>
+                <BuildingOffice2Icon
+                  class="h-8 w-8 text-indigo-400 md:hidden"
+                />
+              </div>
+            </NuxtLink>
+            <!-- Search -->
+            <div class="flex-1 max-w-2xl mx-4">
+              <div class="relative">
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Поиск..."
+                  @keyup.enter="handleSearch"
+                  class="w-full pl-10 pr-10 py-2 border border-gray-700 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Коворкинг.Онлайн
-                  </h1>
-                  <BuildingOffice2Icon
-                    class="h-8 w-8 text-indigo-400 md:hidden"
-                  />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
                 </div>
-              </NuxtLink>
-              <!-- Search -->
-              <div class="flex-1 max-w-2xl mx-4">
-                <div class="relative">
-                  <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Поиск..."
-                    @keyup.enter="handleSearch"
-                    class="w-full pl-10 pr-10 py-2 border border-gray-700 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                <button
+                  v-if="searchQuery"
+                  @click="clearSearch"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
+                >
+                  <svg
+                    class="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="flex items-center space-x-4">
+              <div class="relative">
+                <button
+                  @click="isUserMenuOpen = !isUserMenuOpen"
+                  class="flex items-center space-x-2 focus:outline-none"
+                >
                   <div
-                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                    class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center"
                   >
                     <svg
                       class="h-5 w-5 text-gray-400"
@@ -135,99 +178,54 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
                   </div>
-                  <button
-                    v-if="searchQuery"
-                    @click="clearSearch"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
-                  >
-                    <svg
-                      class="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+                  <span class="text-sm font-medium text-gray-300">{{
+                    user?.email
+                  }}</span>
+                </button>
 
-              <!-- User Profile -->
-              <div class="flex items-center space-x-4">
-                <div class="relative">
+                <!-- User Menu Dropdown -->
+                <div
+                  v-if="isUserMenuOpen"
+                  class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700"
+                >
+                  <NuxtLink
+                    to="/profile"
+                    class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                  >
+                    <UserIcon class="h-5 w-5 mr-2" />
+                    Профиль
+                  </NuxtLink>
+                  <NuxtLink
+                    to="/settings"
+                    class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                  >
+                    <CogIcon class="h-5 w-5 mr-2" />
+                    Настройки
+                  </NuxtLink>
                   <button
-                    @click="isUserMenuOpen = !isUserMenuOpen"
-                    class="flex items-center space-x-2 focus:outline-none"
+                    @click="handleLogout"
+                    class="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
                   >
-                    <div
-                      class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center"
-                    >
-                      <svg
-                        class="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                    <span class="text-sm font-medium text-gray-300">{{
-                      user?.email
-                    }}</span>
+                    <ArrowRightOnRectangleIcon class="h-5 w-5 mr-2" />
+                    Выйти
                   </button>
-
-                  <!-- User Menu Dropdown -->
-                  <div
-                    v-if="isUserMenuOpen"
-                    class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700"
-                  >
-                    <NuxtLink
-                      to="/profile"
-                      class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      <UserIcon class="h-5 w-5 mr-2" />
-                      Профиль
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/settings"
-                      class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      <CogIcon class="h-5 w-5 mr-2" />
-                      Настройки
-                    </NuxtLink>
-                    <button
-                      @click="handleLogout"
-                      class="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
-                    >
-                      <ArrowRightOnRectangleIcon class="h-5 w-5 mr-2" />
-                      Выйти
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <slot />
-        </main>
-      </div>
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto" ref="mainContent">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <slot :main-content-ref="mainContent" />
+        </div>
+      </main>
     </div>
   </div>
 </template>
@@ -254,6 +252,7 @@ const searchStore = useSearchStore();
 const router = useRouter();
 const user = computed(() => authStore.user);
 const isDrawerOpen = ref(false);
+const mainContent = ref<HTMLElement | null>(null);
 const isUserMenuOpen = ref(false);
 const searchQuery = ref(searchStore.getSearchQuery());
 
@@ -264,6 +263,11 @@ const toggleDrawer = () => {
 const handleLogout = async () => {
   authStore.logout();
   router.push("/login");
+};
+
+const handleMainScroll = (e: Event) => {
+  const target = e.target as HTMLElement;
+  // Можно передавать событие дальше в слот если нужно
 };
 
 const navigationItems = computed(() => {

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <div class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-gray-900">
+    <div class="max-w-3xl mx-auto py-2 px-4 sm:px-6 lg:px-8 h-full">
       <!-- Loading Spinner -->
       <div v-if="!user" class="flex justify-center items-center h-64">
         <div

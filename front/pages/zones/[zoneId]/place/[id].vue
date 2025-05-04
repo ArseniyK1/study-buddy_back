@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-gray-900">
+    <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
       <!-- Loading Spinner -->
       <div v-if="!workplace.id" class="flex justify-center items-center h-64">
         <div
@@ -16,9 +16,12 @@
           <div class="flex justify-between items-start">
             <div>
               <h1 class="text-2xl font-bold text-gray-200">
-                {{ workplace.name }}
+                Рабочее место №{{ workplace.id }}. {{ workplace.name }}
               </h1>
               <p class="mt-2 text-gray-400">{{ workplace.description }}</p>
+              <p class="mt-2 text-gray-400">
+                {{ workplace.zone.pricePerHour }} ₽/час
+              </p>
             </div>
             <div class="text-right">
               <span
@@ -49,12 +52,14 @@
           />
         </div>
 
+        <!-- Booking Timeline -->
+
         <!-- Booking Section -->
         <div class="bg-gray-800 rounded-lg shadow border border-gray-700 p-6">
           <h2 class="text-xl font-semibold text-gray-200 mb-6">Бронирование</h2>
 
           <!-- Date and Time Selection -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="grid grid-cols-1 gap-6 mb-6">
             <div>
               <label class="block text-sm font-medium text-gray-400 mb-2">
                 Дата
@@ -66,39 +71,15 @@
                 class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">
-                Время
-              </label>
-              <select
-                v-model="bookingTime"
-                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option
-                  v-for="time in availableTimes"
-                  :key="time"
-                  :value="time"
-                >
-                  {{ time }}
-                </option>
-              </select>
-            </div>
           </div>
 
-          <!-- Duration Selection -->
+          <!-- Booking Timeline -->
           <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-400 mb-2">
-              Длительность
-            </label>
-            <select
-              v-model="duration"
-              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="1">1 час</option>
-              <option value="2">2 часа</option>
-              <option value="4">4 часа</option>
-              <option value="8">8 часов</option>
-            </select>
+            <BookingTimeline
+              :bookings="workplace.bookings"
+              :selected-date="bookingDate"
+              @time-selected="handleTimeSelected"
+            />
           </div>
 
           <!-- Price Calculation -->
@@ -129,6 +110,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../../../services/api";
+import BookingTimeline from "@/components/booking/BookingTimeline.vue";
+import { useToast, POSITION } from "vue-toastification";
 
 interface Workplace {
   id: number;
@@ -136,18 +119,35 @@ interface Workplace {
   description: string;
   status: "AVAILABLE" | "BOOKED" | "MAINTENANCE";
   image?: string;
-  pricePerHour: number;
   zoneId: number;
+  zone: {
+    id: number;
+    name: string;
+    description: string;
+    pricePerHour: number;
+    maxPlaces: number;
+    workspaceId: number;
+  };
+  bookings: {
+    id: number;
+    startTime: string;
+    endTime: string;
+    status: string;
+    totalPrice: number;
+    userId: number;
+    placeId: number;
+  }[];
 }
 
+const toast = useToast();
 const route = useRoute();
 const router = useRouter();
 const workplace = ref<Workplace>({} as Workplace);
 
 // Booking form state
-const bookingDate = ref("");
-const bookingTime = ref("");
-const duration = ref("1");
+const bookingDate = ref("2026-04-20");
+const bookingStartTime = ref<Date | null>(null);
+const bookingEndTime = ref<Date | null>(null);
 
 // Available times (9:00 - 21:00)
 const availableTimes = [
@@ -188,31 +188,56 @@ const canBook = computed(() => {
   return (
     workplace.value.status === "AVAILABLE" &&
     bookingDate.value &&
-    bookingTime.value &&
-    duration.value
+    bookingStartTime.value &&
+    bookingEndTime.value
   );
 });
 
 // Methods
+const handleTimeSelected = (startTime: Date, endTime: Date) => {
+  bookingStartTime.value = startTime;
+  bookingEndTime.value = endTime;
+};
+
 const calculatePrice = () => {
-  if (!workplace.value.pricePerHour) return 0;
-  return workplace.value.pricePerHour * parseInt(duration.value);
+  if (
+    !workplace.value.zone?.pricePerHour ||
+    !bookingStartTime.value ||
+    !bookingEndTime.value
+  )
+    return 0;
+  const hours =
+    (bookingEndTime.value.getTime() - bookingStartTime.value.getTime()) /
+    (1000 * 60 * 60);
+  const totalPrice = workplace.value.zone.pricePerHour * hours;
+  return Math.floor(totalPrice * 100) / 100;
 };
 
 const bookWorkplace = async () => {
   try {
+    if (!bookingStartTime.value || !bookingEndTime.value) return;
+
     const bookingData = {
-      workplaceId: workplace.value.id,
-      date: bookingDate.value,
-      time: bookingTime.value,
-      duration: parseInt(duration.value),
-      totalPrice: calculatePrice(),
+      placeId: workplace.value.id,
+      startTime: bookingStartTime.value.toISOString(),
+      endTime: bookingEndTime.value.toISOString(),
     };
 
-    await api.post("/bookings", bookingData);
+    await api.post("/workplace/booking", bookingData);
+    toast.success("Бронирование успешно создано", {
+      position: POSITION.BOTTOM_RIGHT,
+      timeout: 5000,
+    });
     router.push("/bookings");
-  } catch (error) {
-    console.error("Failed to book workplace:", error);
+  } catch (error: any) {
+    console.error("Ошибка при бронировании:", error);
+    toast.error(
+      error.response?.data?.message || "Ошибка при создании бронирования",
+      {
+        position: POSITION.BOTTOM_RIGHT,
+        timeout: 5000,
+      }
+    );
   }
 };
 
@@ -220,9 +245,30 @@ const bookWorkplace = async () => {
 onMounted(async () => {
   try {
     const { data } = await api.get<Workplace>(`/workplace/${route.params.id}`);
+    if (!data.zone?.id || route.params.zoneId !== data.zone.id.toString()) {
+      toast.error("Рабочее место не найдено в указанной зоне", {
+        position: POSITION.BOTTOM_RIGHT,
+        timeout: 5000,
+        closeOnClick: true,
+        pauseOnFocusLoss: true,
+        pauseOnHover: true,
+        draggable: true,
+        draggablePercent: 0.6,
+        showCloseButtonOnHover: false,
+        hideProgressBar: false,
+        closeButton: "button",
+        icon: true,
+        rtl: false,
+      });
+      return;
+    }
     workplace.value = data;
   } catch (error) {
     console.error("Failed to fetch workplace data:", error);
+    toast.error("Ошибка при загрузке данных", {
+      position: POSITION.BOTTOM_RIGHT,
+      timeout: 5000,
+    });
   }
 });
 </script>

@@ -75,6 +75,30 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function signUp(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    phone: string
+  ) {
+    try {
+      const { data } = await api.post("/auth/sign-up", {
+        email,
+        password,
+        firstName,
+        lastName,
+        phone,
+      });
+      setTokens(data.accessToken, data.refreshToken);
+      await fetchUser();
+      return data;
+    } catch (error) {
+      toast.error((error as ApiError).message || "Failed to sign up");
+      throw error;
+    }
+  }
+
   async function fetchUser() {
     if (!accessToken.value) return null;
     try {
@@ -104,6 +128,7 @@ export const useAuthStore = defineStore("auth", () => {
     initialize,
     setTokens,
     signIn,
+    signUp,
     fetchUser,
     logout,
   };

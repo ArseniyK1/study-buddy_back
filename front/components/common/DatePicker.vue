@@ -3,7 +3,7 @@
     <!-- Main button to open the dropdown -->
     <button
       @click="isOpen = !isOpen"
-      class="bg-gray-800 text-gray-200 rounded-md px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-flex items-center space-x-2"
+      class="date-picker-button bg-gray-800 text-gray-200 rounded-md px-3 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-flex items-center space-x-2"
     >
       <span v-if="!modelValue.startDate && !modelValue.endDate"
         >Выберите период</span
@@ -27,8 +27,7 @@
     <!-- Dropdown menu -->
     <div
       v-if="isOpen"
-      class="absolute mt-2 bg-gray-800 rounded-lg shadow-lg p-4 z-50 w-[600px]"
-      v-click-outside="() => (isOpen = false)"
+      class="date-picker-dropdown absolute mt-2 right-0 bg-gray-800 rounded-lg shadow-lg p-4 z-50 w-[600px]"
     >
       <div class="flex">
         <!-- Preset ranges -->
@@ -86,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   format,
   subDays,
@@ -98,12 +97,6 @@ import {
 import { ru } from "date-fns/locale";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
-
-declare module "@vue/runtime-dom" {
-  interface HTMLElement {
-    clickOutsideEvent?: (event: Event) => void;
-  }
-}
 
 const props = defineProps<{
   modelValue: {
@@ -124,6 +117,30 @@ const dateRange = ref<Date[]>([
   props.modelValue.startDate || new Date(),
   props.modelValue.endDate || new Date(),
 ]);
+
+// Click outside handler
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  const dropdown = document.querySelector(".date-picker-dropdown");
+  const button = document.querySelector(".date-picker-button");
+
+  if (
+    dropdown &&
+    button &&
+    !dropdown.contains(target) &&
+    !button.contains(target)
+  ) {
+    isOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 
 const presets = [
   {
@@ -207,29 +224,6 @@ const applyDates = () => {
   });
   isOpen.value = false;
 };
-
-// Close dropdown when clicking outside
-const vClickOutside = {
-  mounted(
-    el: HTMLElement & { clickOutsideEvent?: (event: Event) => void },
-    binding: { value: () => void }
-  ) {
-    el.clickOutsideEvent = (event: Event) => {
-      if (!(el === event.target || el.contains(event.target as Node))) {
-        binding.value();
-      }
-    };
-    document.addEventListener("click", el.clickOutsideEvent as EventListener);
-  },
-  unmounted(el: HTMLElement & { clickOutsideEvent?: (event: Event) => void }) {
-    if (el.clickOutsideEvent) {
-      document.removeEventListener(
-        "click",
-        el.clickOutsideEvent as EventListener
-      );
-    }
-  },
-};
 </script>
 
 <style>
@@ -244,5 +238,48 @@ const vClickOutside = {
   --dp-secondary-color: #374151;
   --dp-border-color: #4b5563;
   --dp-menu-border-width: 1px;
+  --dp-disabled-color: #6b7280;
+  --dp-scroll-bar-background: #374151;
+  --dp-scroll-bar-color: #6366f1;
+  --dp-success-color: #10b981;
+  --dp-success-color-disabled: #065f46;
+  --dp-icon-color: #9ca3af;
+  --dp-danger-color: #ef4444;
+  --dp-highlight-color: #6366f1;
+}
+
+/* Ensure the calendar is visible */
+.dp__theme_dark {
+  background-color: var(--dp-background-color);
+  color: var(--dp-text-color);
+  border: 1px solid var(--dp-border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Style the calendar header */
+.dp__theme_dark .dp__header {
+  color: var(--dp-text-color);
+}
+
+/* Style the calendar cells */
+.dp__theme_dark .dp__cell {
+  color: var(--dp-text-color);
+}
+
+.dp__theme_dark .dp__cell:hover {
+  background-color: var(--dp-hover-color);
+  color: var(--dp-hover-text-color);
+}
+
+/* Style the selected date */
+.dp__theme_dark .dp__active_date {
+  background-color: var(--dp-primary-color);
+  color: var(--dp-primary-text-color);
+}
+
+/* Style the today date */
+.dp__theme_dark .dp__today {
+  border-color: var(--dp-primary-color);
 }
 </style>

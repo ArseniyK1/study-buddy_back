@@ -43,6 +43,8 @@
                     'bg-red-900 text-red-300': booking.status === 'CANCELLED',
                     'bg-yellow-900 text-yellow-300':
                       booking.status === 'PENDING',
+                    'bg-indigo-900 text-indigo-300':
+                      booking.status === 'ACTIVE',
                   },
                 ]"
               >

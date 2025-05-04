@@ -24,6 +24,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
+import { WorkplaceByIdDto } from './dto/workplace-by-id.dto';
 
 @ApiTags('Рабочее место (Workplace)')
 @Controller('workplace')
@@ -51,6 +52,7 @@ export class WorkplaceController {
   @ApiParam({ name: 'id', description: 'ID рабочего места' })
   findOne(
     @Param('id', ParseIntPipe) id: number,
+    @Query() dto: WorkplaceByIdDto,
   ): Promise<PlaceResponseDto | any> {
     return this.workplaceService.findOne(id);
   }

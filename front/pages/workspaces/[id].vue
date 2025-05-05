@@ -1,6 +1,6 @@
 <template>
   <div class="bg-gray-900">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Loading Spinner for Workspace -->
       <div v-if="!workspace.id" class="flex justify-center items-center h-64">
         <div
@@ -27,7 +27,7 @@
               <h1 class="text-2xl font-bold text-gray-200">
                 {{ workspace.name }}
               </h1>
-              <p class="mt-2 text-gray-400">{{ workspace.description }}</p>
+              <p class="text-gray-400">{{ workspace.description }}</p>
             </div>
             <div class="text-right">
               <p class="text-sm text-gray-400">Одобренно</p>
@@ -66,17 +66,16 @@
         </div>
       </div>
 
-      <!-- Zones Section -->
-      <div class="mt-8">
-        <h2 class="text-xl font-semibold text-gray-200 mb-6">
-          Зоны коворкинга
+      <!-- Workspace Table -->
+      <div class="mt-2">
+        <h2 class="text-xl font-semibold text-gray-200">
+          Зоны и рабочие места
         </h2>
-
-        <InfiniteList :fetch-items="fetchZones" :limit="20">
-          <template #default="{ items: zones }">
-            <ZoneCard v-for="zone in zones" :key="zone.id" :zone="zone" />
-          </template>
-        </InfiniteList>
+        <WorkspaceTable
+          :zones="zones"
+          :loading="loading"
+          @book-place="handleBookPlace"
+        />
       </div>
     </div>
   </div>
@@ -86,8 +85,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/services/api";
-import ZoneCard from "@/components/workspace/ZoneCard.vue";
-import InfiniteList from "@/components/common/InfiniteList.vue";
+import WorkspaceTable from "@/components/workspace/WorkspaceTable.vue";
 
 interface Workspace {
   id: number;
@@ -102,17 +100,65 @@ interface Zone {
   name: string;
   description: string;
   pricePerHour: number;
-  places?: any[];
+  maxPlaces: number;
+  workspaceId: number;
+  workspace: {
+    id: number;
+    name: string;
+    address: string;
+    description: string;
+    capacity: number;
+    amenities: string;
+    approved: boolean;
+    ownerId: number;
+  };
+  places?: Place[];
+}
+
+interface Place {
+  id: number;
+  name: string;
+  description: string;
+  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+  zoneId: number;
 }
 
 const route = useRoute();
 const workspace = ref<Workspace>({} as Workspace);
+const zones = ref<Zone[]>([]);
+const loading = ref(true);
 
-const fetchZones = async (offset: number, limit: number) => {
-  const { data } = await api.get<Zone[]>(
-    `/workspace-zones?workspaceId=${route.params.id}&offset=${offset}&limit=${limit}`
-  );
-  return data;
+const fetchZones = async () => {
+  try {
+    const { data } = await api.get<Zone[]>(
+      `/workspace-zones?workspaceId=${route.params.id}`
+    );
+    zones.value = data;
+  } catch (error) {
+    console.error("Failed to fetch zones:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleBookPlace = async (
+  zoneId: number,
+  placeId: number,
+  startTime: Date,
+  endTime: Date
+) => {
+  try {
+    await api.post("/bookings", {
+      zoneId,
+      placeId,
+      startTime,
+      endTime,
+    });
+    // Refresh zones data after booking
+    await fetchZones();
+  } catch (error) {
+    console.error("Failed to book place:", error);
+  }
 };
 
 onMounted(async () => {
@@ -121,6 +167,7 @@ onMounted(async () => {
       `/workspaces/${route.params.id}`
     );
     workspace.value = workspaceData;
+    await fetchZones();
   } catch (error) {
     console.error("Failed to fetch workspace data:", error);
   }

@@ -34,8 +34,12 @@
         </div>
       </div>
 
-      <!-- Interactive Layout -->
-      <WorkplaceList :places="places" :zone-id="zone.id" />
+      <!-- Workspace Table -->
+      <WorkspaceTable
+        :zones="[zone]"
+        :loading="!zone.id"
+        @book-place="handleBookPlace"
+      />
     </div>
   </div>
 </template>
@@ -44,7 +48,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/services/api";
-import WorkplaceList from "@/components/workplaces/WorkplaceList.vue";
+import WorkspaceTable from "@/components/workspace/WorkspaceTable.vue";
 
 interface Zone {
   id: number;
@@ -52,29 +56,50 @@ interface Zone {
   description: string;
   pricePerHour: number;
   maxPlaces: number;
+  workspaceId: number;
+  workspace: {
+    id: number;
+    name: string;
+    address: string;
+    description: string;
+    capacity: number;
+    amenities: string;
+    approved: boolean;
+    ownerId: number;
+  };
   places?: Place[];
 }
 
 interface Place {
   id: number;
   name: string;
-  status: "AVAILABLE" | "BOOKED" | "MAINTENANCE";
+  description: string;
+  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+  zoneId: number;
 }
 
 const route = useRoute();
 const zone = ref<Zone>({} as Zone);
-const places = ref<Place[]>([]);
 
 const availablePlaces = computed(() => {
-  return places.value.filter((place) => place.status === "AVAILABLE").length;
+  return (
+    zone.value.places?.filter((place) => place.status === "AVAILABLE").length ||
+    0
+  );
 });
 
 const occupiedPlaces = computed(() => {
-  return places.value.filter((place) => place.status === "BOOKED").length;
+  return (
+    zone.value.places?.filter((place) => place.status === "OCCUPIED").length ||
+    0
+  );
 });
 
 const maintenancePlaces = computed(() => {
-  return places.value.filter((place) => place.status === "MAINTENANCE").length;
+  return (
+    zone.value.places?.filter((place) => place.status === "MAINTENANCE")
+      .length || 0
+  );
 });
 
 onMounted(async () => {
@@ -83,13 +108,31 @@ onMounted(async () => {
       `/workspace-zones/${route.params.id}`
     );
     zone.value = zoneData;
-
-    const { data: placesData } = await api.get<Place[]>(
-      `/workplace?zoneId=${route.params.id}`
-    );
-    places.value = placesData;
   } catch (error) {
     console.error("Failed to fetch zone data:", error);
   }
 });
+
+const handleBookPlace = async (
+  zoneId: number,
+  placeId: number,
+  startTime: Date,
+  endTime: Date
+) => {
+  try {
+    await api.post("/bookings", {
+      zoneId,
+      placeId,
+      startTime,
+      endTime,
+    });
+    // Refresh zone data after booking
+    const { data: zoneData } = await api.get<Zone>(
+      `/workspace-zones/${route.params.id}`
+    );
+    zone.value = zoneData;
+  } catch (error) {
+    console.error("Failed to book place:", error);
+  }
+};
 </script>

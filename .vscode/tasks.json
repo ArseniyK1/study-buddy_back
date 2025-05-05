@@ -26,8 +26,9 @@
       "icon": { "color": "terminal.ansiGreen", "id": "server" }
     },
     {
-      "type": "shell",
-      "command": "cd back && npx prisma studio",
+      "type": "npm",
+      "script": "prisma:studio",
+      "path": "back",
       "problemMatcher": [],
       "label": "DB-VIEW",
       "icon": { "color": "terminal.ansiBlue", "id": "database" }

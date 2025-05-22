@@ -5,6 +5,8 @@ import {
   AuthResponse,
   FindAllUsersRequest,
   UserListResponse,
+  SignInWithTelegramRequest,
+  LinkTelegramAccountRequest,
 } from 'shared/generated/auth';
 import { Public } from './guard/public.decorator';
 import { SignUpDto } from './dto/sing-up.dto';
@@ -30,6 +32,24 @@ export class AuthController {
   @ApiBody({ type: SignUpDto })
   signUp(@Body() dto: SignUpDto): Observable<AuthResponse> {
     return this.authService.signUp(dto);
+  }
+
+  @Public()
+  @Post('telegram/sign-in')
+  @ApiOperation({ summary: 'Sign in with Telegram' })
+  signInWithTelegram(
+    @Body() dto: SignInWithTelegramRequest,
+  ): Observable<AuthResponse> {
+    return this.authService.signInWithTelegram(dto);
+  }
+
+  @Public()
+  @Post('telegram/link')
+  @ApiOperation({ summary: 'Link Telegram account' })
+  linkTelegramAccount(
+    @Body() dto: LinkTelegramAccountRequest,
+  ): Observable<AuthResponse> {
+    return this.authService.linkTelegramAccount(dto);
   }
 
   @Post('all-users')

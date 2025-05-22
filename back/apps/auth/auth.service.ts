@@ -11,10 +11,13 @@ import {
   User,
   UserListResponse,
   Role,
+  SignInWithTelegramRequest,
+  LinkTelegramAccountRequest,
 } from 'shared/generated/auth';
 import { RpcException } from '@nestjs/microservices';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { getAllUsers } from '@prisma/client/sql';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -185,5 +188,132 @@ export class AuthService {
         message: 'Недействительный refresh token!',
       });
     }
+  }
+
+  private verifyTelegramHash(data: {
+    telegramId: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photoUrl: string;
+    authDate: string;
+    hash: string;
+  }): boolean {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      throw new RpcException({
+        code: Status.INTERNAL,
+        message: 'Telegram bot token not configured',
+      });
+    }
+
+    const checkString = Object.entries(data)
+      .filter(([key]) => key !== 'hash')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
+    const secretKey = createHash('sha256').update(botToken).digest();
+
+    const calculatedHash = createHash('sha256')
+      .update(secretKey)
+      .update(checkString)
+      .digest('hex');
+
+    return calculatedHash === data.hash;
+  }
+
+  async signInWithTelegram(
+    data: SignInWithTelegramRequest,
+  ): Promise<AuthResponse> {
+    if (!this.verifyTelegramHash(data)) {
+      throw new RpcException({
+        code: Status.UNAUTHENTICATED,
+        message: 'Invalid Telegram authentication data',
+      });
+    }
+
+    let user = await this.prisma.user.findFirst({
+      where: { telegramId: data.telegramId },
+      include: { role: true },
+    });
+
+    if (!user) {
+      // Create new user if not exists
+      user = await this.prisma.user.create({
+        data: {
+          email: `${data.telegramId}@telegram.user`,
+          password: '', // Empty password for Telegram users
+          firstName: data.firstName,
+          lastName: data.lastName,
+          telegramId: data.telegramId,
+          telegramUsername: data.username,
+          roleId: 1, // Default role
+        },
+        include: { role: true },
+      });
+    }
+
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role.value,
+    };
+
+    return {
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '24h',
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '30d',
+      }),
+    };
+  }
+
+  async linkTelegramAccount(
+    data: LinkTelegramAccountRequest,
+  ): Promise<AuthResponse> {
+    if (!this.verifyTelegramHash(data)) {
+      throw new RpcException({
+        code: Status.UNAUTHENTICATED,
+        message: 'Invalid Telegram authentication data',
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: +data.userId },
+      include: { role: true },
+    });
+
+    if (!user) {
+      throw new RpcException({
+        code: Status.NOT_FOUND,
+        message: 'User not found',
+      });
+    }
+
+    // Update user with Telegram data
+    await this.prisma.user.update({
+      where: { id: +data.userId },
+      data: {
+        telegramId: data.telegramId,
+        telegramUsername: data.username,
+      },
+    });
+
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role.value,
+    };
+
+    return {
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '24h',
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '30d',
+      }),
+    };
   }
 }

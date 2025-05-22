@@ -37,6 +37,27 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface SignInWithTelegramRequest {
+  telegramId: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  photoUrl: string;
+  authDate: string;
+  hash: string;
+}
+
+export interface LinkTelegramAccountRequest {
+  userId: string;
+  telegramId: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  photoUrl: string;
+  authDate: string;
+  hash: string;
+}
+
 export interface UserName {
   firstName: string;
   lastName: string;
@@ -60,6 +81,8 @@ export interface User {
   email: string;
   phone: string;
   role: Role | undefined;
+  telegramId?: string | undefined;
+  telegramUsername?: string | undefined;
 }
 
 export interface Role {
@@ -310,6 +333,232 @@ export const RefreshTokenRequest: MessageFns<RefreshTokenRequest> = {
   },
 };
 
+function createBaseSignInWithTelegramRequest(): SignInWithTelegramRequest {
+  return { telegramId: "", firstName: "", lastName: "", username: "", photoUrl: "", authDate: "", hash: "" };
+}
+
+export const SignInWithTelegramRequest: MessageFns<SignInWithTelegramRequest> = {
+  encode(message: SignInWithTelegramRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.telegramId !== "") {
+      writer.uint32(10).string(message.telegramId);
+    }
+    if (message.firstName !== "") {
+      writer.uint32(18).string(message.firstName);
+    }
+    if (message.lastName !== "") {
+      writer.uint32(26).string(message.lastName);
+    }
+    if (message.username !== "") {
+      writer.uint32(34).string(message.username);
+    }
+    if (message.photoUrl !== "") {
+      writer.uint32(42).string(message.photoUrl);
+    }
+    if (message.authDate !== "") {
+      writer.uint32(50).string(message.authDate);
+    }
+    if (message.hash !== "") {
+      writer.uint32(58).string(message.hash);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SignInWithTelegramRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSignInWithTelegramRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.telegramId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.firstName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.lastName = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.username = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.photoUrl = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.authDate = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.hash = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
+function createBaseLinkTelegramAccountRequest(): LinkTelegramAccountRequest {
+  return {
+    userId: "",
+    telegramId: "",
+    firstName: "",
+    lastName: "",
+    username: "",
+    photoUrl: "",
+    authDate: "",
+    hash: "",
+  };
+}
+
+export const LinkTelegramAccountRequest: MessageFns<LinkTelegramAccountRequest> = {
+  encode(message: LinkTelegramAccountRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.telegramId !== "") {
+      writer.uint32(18).string(message.telegramId);
+    }
+    if (message.firstName !== "") {
+      writer.uint32(26).string(message.firstName);
+    }
+    if (message.lastName !== "") {
+      writer.uint32(34).string(message.lastName);
+    }
+    if (message.username !== "") {
+      writer.uint32(42).string(message.username);
+    }
+    if (message.photoUrl !== "") {
+      writer.uint32(50).string(message.photoUrl);
+    }
+    if (message.authDate !== "") {
+      writer.uint32(58).string(message.authDate);
+    }
+    if (message.hash !== "") {
+      writer.uint32(66).string(message.hash);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LinkTelegramAccountRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLinkTelegramAccountRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.telegramId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.firstName = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.lastName = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.username = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.photoUrl = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.authDate = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.hash = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
 function createBaseUserName(): UserName {
   return { firstName: "", lastName: "" };
 }
@@ -481,6 +730,12 @@ export const User: MessageFns<User> = {
     if (message.role !== undefined) {
       Role.encode(message.role, writer.uint32(58).fork()).join();
     }
+    if (message.telegramId !== undefined) {
+      writer.uint32(66).string(message.telegramId);
+    }
+    if (message.telegramUsername !== undefined) {
+      writer.uint32(74).string(message.telegramUsername);
+    }
     return writer;
   },
 
@@ -545,6 +800,22 @@ export const User: MessageFns<User> = {
           }
 
           message.role = Role.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.telegramId = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.telegramUsername = reader.string();
           continue;
         }
       }
@@ -628,6 +899,10 @@ export interface AuthServiceClient {
   findAllUsers(request: FindAllUsersRequest, metadata: Metadata, ...rest: any): Observable<UserListResponse>;
 
   getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Observable<User>;
+
+  signInWithTelegram(request: SignInWithTelegramRequest, metadata: Metadata, ...rest: any): Observable<AuthResponse>;
+
+  linkTelegramAccount(request: LinkTelegramAccountRequest, metadata: Metadata, ...rest: any): Observable<AuthResponse>;
 }
 
 /** Сервис аутентификации и управления пользователями */
@@ -658,11 +933,31 @@ export interface AuthServiceController {
   ): Promise<UserListResponse> | Observable<UserListResponse> | UserListResponse;
 
   getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
+
+  signInWithTelegram(
+    request: SignInWithTelegramRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<AuthResponse> | Observable<AuthResponse> | AuthResponse;
+
+  linkTelegramAccount(
+    request: LinkTelegramAccountRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<AuthResponse> | Observable<AuthResponse> | AuthResponse;
 }
 
 export function AuthServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["signIn", "signUp", "refreshToken", "findAllUsers", "getProfile"];
+    const grpcMethods: string[] = [
+      "signIn",
+      "signUp",
+      "refreshToken",
+      "findAllUsers",
+      "getProfile",
+      "signInWithTelegram",
+      "linkTelegramAccount",
+    ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
@@ -725,6 +1020,26 @@ export const AuthServiceService = {
     responseSerialize: (value: User) => Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer) => User.decode(value),
   },
+  signInWithTelegram: {
+    path: "/auth.AuthService/SignInWithTelegram",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SignInWithTelegramRequest) =>
+      Buffer.from(SignInWithTelegramRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => SignInWithTelegramRequest.decode(value),
+    responseSerialize: (value: AuthResponse) => Buffer.from(AuthResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AuthResponse.decode(value),
+  },
+  linkTelegramAccount: {
+    path: "/auth.AuthService/LinkTelegramAccount",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: LinkTelegramAccountRequest) =>
+      Buffer.from(LinkTelegramAccountRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => LinkTelegramAccountRequest.decode(value),
+    responseSerialize: (value: AuthResponse) => Buffer.from(AuthResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => AuthResponse.decode(value),
+  },
 } as const;
 
 export interface AuthServiceServer extends UntypedServiceImplementation {
@@ -733,6 +1048,8 @@ export interface AuthServiceServer extends UntypedServiceImplementation {
   refreshToken: handleUnaryCall<RefreshTokenRequest, AuthResponse>;
   findAllUsers: handleUnaryCall<FindAllUsersRequest, UserListResponse>;
   getProfile: handleUnaryCall<GetProfileRequest, User>;
+  signInWithTelegram: handleUnaryCall<SignInWithTelegramRequest, AuthResponse>;
+  linkTelegramAccount: handleUnaryCall<LinkTelegramAccountRequest, AuthResponse>;
 }
 
 function longToNumber(int64: { toString(): string }): number {

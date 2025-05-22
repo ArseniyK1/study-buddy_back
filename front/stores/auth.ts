@@ -59,45 +59,100 @@ export const useAuthStore = defineStore("auth", () => {
     isInitialized.value = true;
   }
 
-  async function signIn(email: string, password: string) {
+  const signIn = async (email: string, password: string) => {
     try {
-      const { data } = await api.post("/auth/sign-in", {
-        email,
-        password,
-      });
-      console.log("Data:", data);
+      const { data } = await api.post("/auth/sign-in", { email, password });
       setTokens(data.accessToken, data.refreshToken);
       await fetchUser();
       return data;
     } catch (error) {
-      toast.error("Неправильный email и/или пароль");
+      toast.error((error as ApiError).message || "Failed to sign in");
       throw error;
     }
-  }
+  };
 
-  async function signUp(
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    phone: string
-  ) {
+  const signUp = async (data: {
+    email: string;
+    password: string;
+    name: {
+      firstName: string;
+      lastName: string;
+      middleName?: string;
+    };
+    phone: string;
+  }) => {
     try {
-      const { data } = await api.post("/auth/sign-up", {
-        email,
-        password,
-        firstName,
-        lastName,
-        phone,
-      });
-      setTokens(data.accessToken, data.refreshToken);
+      const response = await api.post("/auth/sign-up", data);
+      setTokens(response.data.accessToken, response.data.refreshToken);
       await fetchUser();
-      return data;
+      return response.data;
     } catch (error) {
       toast.error((error as ApiError).message || "Failed to sign up");
       throw error;
     }
-  }
+  };
+
+  const signInWithTelegram = async (data: {
+    telegramId: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photoUrl: string;
+    authDate: string;
+    hash: string;
+  }) => {
+    try {
+      const response = await api.post("/auth/telegram/sign-in", {
+        telegram_id: data.telegramId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        username: data.username,
+        photo_url: data.photoUrl,
+        auth_date: data.authDate,
+        hash: data.hash,
+      });
+      setTokens(response.data.accessToken, response.data.refreshToken);
+      await fetchUser();
+      return response.data;
+    } catch (error) {
+      toast.error(
+        (error as ApiError).message || "Failed to sign in with Telegram"
+      );
+      throw error;
+    }
+  };
+
+  const linkTelegramAccount = async (data: {
+    userId: string;
+    telegramId: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photoUrl: string;
+    authDate: string;
+    hash: string;
+  }) => {
+    try {
+      const response = await api.post("/auth/telegram/link", {
+        user_id: data.userId,
+        telegram_id: data.telegramId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        username: data.username,
+        photo_url: data.photoUrl,
+        auth_date: data.authDate,
+        hash: data.hash,
+      });
+      setTokens(response.data.accessToken, response.data.refreshToken);
+      await fetchUser();
+      return response.data;
+    } catch (error) {
+      toast.error(
+        (error as ApiError).message || "Failed to link Telegram account"
+      );
+      throw error;
+    }
+  };
 
   async function fetchUser() {
     if (!accessToken.value) return null;
@@ -129,6 +184,8 @@ export const useAuthStore = defineStore("auth", () => {
     setTokens,
     signIn,
     signUp,
+    signInWithTelegram,
+    linkTelegramAccount,
     fetchUser,
     logout,
   };

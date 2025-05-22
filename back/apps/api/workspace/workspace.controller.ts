@@ -26,14 +26,15 @@ import { FindWorkspacesDto } from './dto/find-workspaces.dto';
 export class WorkspaceController {
   constructor(private readonly workspaceService: WorkspaceService) {}
 
-  @Roles(Role.ADMIN)
+  // @Roles(Role.ADMIN)
   @Post()
   @ApiOperation({ summary: 'Создать новое коворкинг пространство' })
   create(
     @Request() req: IRequest,
     @Body() createWorkspaceDto: CreateWorkspaceDto,
   ) {
-    return this.workspaceService.create(req.user.userId, createWorkspaceDto);
+    console.log('req.user.userId', req.user.userId);
+    return this.workspaceService.create(+req.user.userId, createWorkspaceDto);
   }
 
   @Get()
@@ -73,7 +74,7 @@ export class WorkspaceController {
   @ApiOperation({ summary: 'Удалить рабочее пространство' })
   @ApiParam({ name: 'id', description: 'ID рабочего пространства' })
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.workspaceService.remove(id);
+    return this.workspaceService.remove(+id);
   }
 
   @Post(':id/managers')

@@ -39,11 +39,4 @@ export class CreateWorkspaceDto {
   @IsString()
   @IsOptional()
   amenities?: string;
-
-  @ApiProperty({
-    description: 'ID владельца рабочего пространства',
-    example: faker.number.int({ min: 1, max: 100 }),
-  })
-  @IsNumber()
-  ownerId: number;
 }

@@ -148,10 +148,12 @@
 import { ref, computed } from "vue";
 import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
+import { useNotify } from "../services/notify";
 
 const authStore = useAuthStore();
 const user = computed(() => authStore.getProfileComputed);
 const loading = ref(false);
+const notify = useNotify();
 
 const passwordForm = ref({
   currentPassword: "",
@@ -161,7 +163,7 @@ const passwordForm = ref({
 
 const changePassword = async () => {
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    alert("Новые пароли не совпадают");
+    notify.error("Ошибка", "Новые пароли не совпадают");
     return;
   }
 
@@ -171,7 +173,7 @@ const changePassword = async () => {
       currentPassword: passwordForm.value.currentPassword,
       newPassword: passwordForm.value.newPassword,
     });
-    alert("Пароль успешно изменен");
+    notify.success("Успех", "Пароль успешно изменен");
     passwordForm.value = {
       currentPassword: "",
       newPassword: "",
@@ -179,7 +181,7 @@ const changePassword = async () => {
     };
   } catch (error) {
     console.error("Failed to change password:", error);
-    alert("Ошибка при смене пароля");
+    notify.error("Ошибка", "Не удалось изменить пароль");
   } finally {
     loading.value = false;
   }

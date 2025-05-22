@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
@@ -15,6 +16,9 @@ export class WorkspaceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateWorkspaceDto) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
     return await this.prisma.workspace.create({
       data: {
         name: dto.name,
@@ -22,11 +26,8 @@ export class WorkspaceService {
         description: dto.description,
         capacity: dto.capacity,
         amenities: dto.amenities,
-        ownerId: userId,
+        ownerId: +userId,
         approved: false,
-      },
-      include: {
-        owner: true,
       },
     });
   }
@@ -148,18 +149,86 @@ export class WorkspaceService {
 
   async remove(id: number) {
     try {
-      const workspace = await this.prisma.workspace.delete({
+      // First check if workspace exists
+      const workspace = await this.prisma.workspace.findUnique({
         where: { id },
+        include: {
+          managers: true,
+          zones: {
+            include: {
+              places: true,
+            },
+          },
+        },
       });
 
-      if (!workspace?.id) {
+      if (!workspace) {
         throw new NotFoundException(
           `Коворкинг пространство с ID ${id} не найдено`,
         );
       }
 
-      return workspace;
+      // Get all place IDs from all zones
+      const placeIds = workspace.zones.flatMap((zone) =>
+        zone.places.map((place) => place.id),
+      );
+
+      // Use transaction with increased timeout
+      return await this.prisma.$transaction(
+        async (prisma) => {
+          // Delete all related records in parallel to speed up the process
+          await Promise.all([
+            // Delete all bookings for all places
+            placeIds.length > 0
+              ? prisma.booking.deleteMany({
+                  where: {
+                    placeId: {
+                      in: placeIds,
+                    },
+                  },
+                })
+              : Promise.resolve(),
+
+            // Delete all manager relationships
+            prisma.workspaceManager.deleteMany({
+              where: { workspaceId: id },
+            }),
+          ]);
+
+          // Delete all places and zones in parallel
+          await Promise.all([
+            // Delete all places
+            placeIds.length > 0
+              ? prisma.place.deleteMany({
+                  where: {
+                    id: {
+                      in: placeIds,
+                    },
+                  },
+                })
+              : Promise.resolve(),
+
+            // Delete all zones
+            prisma.workspaceZone.deleteMany({
+              where: { workspaceId: id },
+            }),
+          ]);
+
+          // Finally delete the workspace
+          return await prisma.workspace.delete({
+            where: { id },
+          });
+        },
+        {
+          timeout: 30000, // Increase timeout to 30 seconds
+        },
+      );
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // Log the actual error for debugging
+      console.error('Error details:', error);
       throw new InternalServerErrorException(
         `Произошла ошибка при удалении коворкинг пространства с ID ${id}`,
         { cause: error },

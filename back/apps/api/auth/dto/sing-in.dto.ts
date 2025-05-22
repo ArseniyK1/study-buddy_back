@@ -9,7 +9,7 @@ export class SignInDto implements SignInRequest {
     format: 'email',
   })
   @IsString({ message: 'Поле email должно быть типа STRING' })
-  @IsEmail()
+  // @IsEmail()
   @IsNotEmpty({ message: 'Поле email не должно быть пустым' })
   email: string;
 

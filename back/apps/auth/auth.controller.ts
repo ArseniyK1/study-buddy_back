@@ -12,6 +12,8 @@ import {
   SignUpRequest,
   User,
   UserListResponse,
+  SignInWithTelegramRequest,
+  LinkTelegramAccountRequest,
 } from 'shared/generated/auth';
 
 @ApiTags('auth')
@@ -42,5 +44,19 @@ export class AuthController implements AuthServiceController {
   @GrpcMethod('AuthService', 'RefreshToken')
   async refreshToken(data: RefreshTokenRequest): Promise<AuthResponse> {
     return await this.authService.refreshToken(data.refreshToken);
+  }
+
+  @GrpcMethod('AuthService', 'SignInWithTelegram')
+  async signInWithTelegram(
+    data: SignInWithTelegramRequest,
+  ): Promise<AuthResponse> {
+    return await this.authService.signInWithTelegram(data);
+  }
+
+  @GrpcMethod('AuthService', 'LinkTelegramAccount')
+  async linkTelegramAccount(
+    data: LinkTelegramAccountRequest,
+  ): Promise<AuthResponse> {
+    return await this.authService.linkTelegramAccount(data);
   }
 }

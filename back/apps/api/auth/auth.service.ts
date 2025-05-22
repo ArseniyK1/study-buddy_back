@@ -9,6 +9,8 @@ import {
   SignUpRequest,
   GetProfileRequest,
   User,
+  SignInWithTelegramRequest,
+  LinkTelegramAccountRequest,
 } from 'shared/generated/auth';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -72,6 +74,28 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     console.log('request', JSON.stringify(request));
     return from(
       handleRequest(() => this.authService.refreshToken(request, metadata)),
+    );
+  }
+
+  signInWithTelegram(
+    request: SignInWithTelegramRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<AuthResponse> {
+    return from(
+      handleRequest(() =>
+        this.authService.signInWithTelegram(request, metadata),
+      ),
+    );
+  }
+
+  linkTelegramAccount(
+    request: LinkTelegramAccountRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<AuthResponse> {
+    return from(
+      handleRequest(() =>
+        this.authService.linkTelegramAccount(request, metadata),
+      ),
     );
   }
 }

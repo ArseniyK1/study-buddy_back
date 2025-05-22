@@ -1,3 +1,4 @@
+<!-- BookingTimeline.vue -->
 <template>
   <div class="bg-gray-800 rounded-lg shadow border border-gray-700 p-6">
     <div class="relative">
@@ -24,149 +25,157 @@
           >
             <p class="font-medium mb-2">Выберите время бронирования:</p>
             <ol class="list-decimal list-inside space-y-1">
-              <li>Кликните для выбора времени начала</li>
-              <li>Кликните для выбора времени окончания</li>
-              <li>Нажмите на выбранное время для точной настройки</li>
+              <li>Найдите свободное место на временной шкале</li>
+              <li>Кликните на свободное место для начала бронирования</li>
+              <li>Выберите время окончания бронирования</li>
             </ol>
           </div>
         </div>
       </div>
 
-      <!-- Timeline -->
-      <div class="relative">
-        <!-- Time markers -->
-        <div class="flex justify-between mb-2">
-          <span
-            v-for="time in timeMarkers"
-            :key="time"
-            class="text-sm text-gray-400"
-          >
-            {{ time }}
+      <!-- Gantt Chart Container -->
+      <div class="overflow-x-auto">
+        <div class="min-w-[800px]">
+          <!-- Time markers -->
+          <div class="flex mb-2">
+            <div class="w-64 flex-shrink-0"></div>
+            <div class="flex-grow flex justify-between">
+              <span
+                v-for="time in timeMarkers"
+                :key="time"
+                class="text-sm text-gray-400"
+              >
+                {{ time }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Timeline grid -->
+          <div class="relative">
+            <!-- Grid lines -->
+            <div class="absolute inset-0 flex">
+              <div class="w-64 flex-shrink-0"></div>
+              <div class="flex-grow grid grid-cols-12">
+                <div
+                  v-for="i in 12"
+                  :key="i"
+                  class="border-l border-gray-700"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Workplace rows -->
+            <div
+              v-for="workplace in workplaces"
+              :key="workplace.id"
+              class="flex items-center h-16 mb-2 relative group"
+            >
+              <!-- Workplace info -->
+              <div
+                class="w-64 flex-shrink-0 p-2 bg-gray-700 rounded-l-lg h-full flex flex-col justify-center"
+              >
+                <div class="font-medium text-gray-200">
+                  {{ workplace.name }}
+                </div>
+                <div class="text-sm text-gray-400">
+                  {{ workplace.zone.name }}
+                </div>
+              </div>
+
+              <!-- Timeline -->
+              <div
+                class="flex-grow h-full bg-gray-700 rounded-r-lg relative cursor-pointer"
+                @click="handleTimelineClick($event, workplace)"
+              >
+                <!-- Available slots -->
+                <div
+                  v-for="(slot, index) in getAvailableSlots(workplace)"
+                  :key="index"
+                  class="absolute h-full bg-green-800/20 hover:bg-green-500/30 transition-colors"
+                  :style="{
+                    left: `${slot.start}%`,
+                    width: `${slot.width}%`,
+                  }"
+                ></div>
+
+                <!-- Bookings -->
+                <div
+                  v-for="booking in getWorkplaceBookings(workplace)"
+                  :key="booking.id"
+                  class="absolute h-full bg-red-500/20"
+                  :style="{
+                    left: `${getBookingPosition(booking.startTime)}%`,
+                    width: `${getBookingWidth(
+                      booking.startTime,
+                      booking.endTime
+                    )}%`,
+                  }"
+                >
+                  <div
+                    class="absolute inset-0 flex items-center justify-center"
+                  >
+                    <span class="text-xs text-red-400">
+                      {{
+                        formatBookingTime(booking.startTime, booking.endTime)
+                      }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Selection range -->
+                <div
+                  v-if="
+                    selectionStart && selectedWorkplace?.id === workplace.id
+                  "
+                  class="absolute h-full bg-indigo-500/20"
+                  :style="{
+                    left: `${getTimePosition(selectionStart)}%`,
+                    width: `${selectionWidth}%`,
+                  }"
+                >
+                  <div
+                    class="absolute inset-0 flex items-center justify-center"
+                  >
+                    <span class="text-xs text-indigo-400">
+                      {{ formatSelectionTime() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection info -->
+      <div v-if="selectionStart" class="mt-4 space-y-2">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-400">Место:</span>
+          <span class="text-indigo-400">
+            {{ selectedWorkplace?.name }} ({{ selectedWorkplace?.zone.name }})
           </span>
         </div>
-
-        <!-- Progress bar container -->
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-400">Начало:</span>
+          <span class="text-indigo-400">
+            {{ formatFullTime(selectionStart) }}
+          </span>
+        </div>
         <div
-          class="h-8 bg-gray-700 rounded-full overflow-hidden relative cursor-pointer"
-          @click="handleTimelineClick"
-          ref="timelineRef"
+          v-if="selectionEnd"
+          class="flex justify-between items-center text-sm"
         >
-          <!-- Available slots -->
-          <div
-            v-for="(slot, index) in availableSlots"
-            :key="index"
-            class="absolute h-full bg-green-800 hover:bg-green-500/30 transition-colors"
-            :style="{
-              left: `${slot.start}%`,
-              width: `${slot.width}%`,
-            }"
-          ></div>
-
-          <!-- Booked slots -->
-          <div
-            v-for="booking in allBookings"
-            :key="booking.id"
-            class="absolute h-full bg-red-500/20"
-            :style="{
-              left: `${getBookingPosition(booking.startTime)}%`,
-              width: `${getBookingWidth(booking.startTime, booking.endTime)}%`,
-            }"
-          >
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-xs text-red-400">
-                {{ formatBookingTime(booking.startTime, booking.endTime) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Selection range -->
-          <div
-            v-if="selectionStart"
-            class="absolute h-full bg-indigo-500/20"
-            :class="{ 'cursor-pointer hover:bg-indigo-500/30': isAdjusting }"
-            :style="{
-              left: `${getTimePosition(selectionStart)}%`,
-              width: `${selectionWidth}%`,
-            }"
-            @click="handleSelectionClick"
-          >
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-xs text-indigo-400">
-                {{ formatSelectionTime() }}
-              </span>
-            </div>
-            <!-- Selection frame -->
-            <div
-              v-if="isAdjusting"
-              class="absolute inset-0 border-2 border-indigo-500 rounded-lg"
-            ></div>
-          </div>
-
-          <!-- Selection markers -->
-          <div
-            v-if="selectionStart"
-            class="absolute h-full w-1 bg-indigo-500 cursor-pointer hover:w-2 transition-all"
-            :class="{
-              'ring-2 ring-indigo-500 ring-offset-2 ring-offset-gray-700':
-                isAdjustingStart,
-            }"
-            :style="{ left: `${getTimePosition(selectionStart)}%` }"
-            @click="startAdjusting('start')"
-          ></div>
-          <div
-            v-if="selectionEnd"
-            class="absolute h-full w-1 bg-indigo-500 cursor-pointer hover:w-2 transition-all"
-            :class="{
-              'ring-2 ring-indigo-500 ring-offset-2 ring-offset-gray-700':
-                isAdjustingEnd,
-            }"
-            :style="{ left: `${getTimePosition(selectionEnd)}%` }"
-            @click="startAdjusting('end')"
-          ></div>
+          <span class="text-gray-400">Конец:</span>
+          <span class="text-indigo-400">
+            {{ formatFullTime(selectionEnd) }}
+          </span>
         </div>
-
-        <!-- Selection info -->
-        <div v-if="selectionStart" class="mt-4 space-y-2">
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-400">Начало:</span>
-            <span
-              class="text-indigo-400 cursor-pointer hover:text-indigo-300"
-              :class="{
-                'ring-2 ring-indigo-500 rounded px-2': isAdjustingStart,
-              }"
-              @click="startAdjusting('start')"
-            >
-              {{ formatFullTime(selectionStart) }}
-            </span>
-          </div>
-          <div
-            v-if="selectionEnd"
-            class="flex justify-between items-center text-sm"
-          >
-            <span class="text-gray-400">Конец:</span>
-            <span
-              class="text-indigo-400 cursor-pointer hover:text-indigo-300"
-              :class="{ 'ring-2 ring-indigo-500 rounded px-2': isAdjustingEnd }"
-              @click="startAdjusting('end')"
-            >
-              {{ formatFullTime(selectionEnd) }}
-            </span>
-          </div>
-          <div
-            v-if="selectionEnd"
-            class="flex justify-between items-center text-sm"
-          >
-            <span class="text-gray-400">Длительность:</span>
-            <span class="text-indigo-400">{{ formatDuration() }}</span>
-          </div>
-        </div>
-
-        <!-- Instructions -->
-        <div class="mt-4 text-sm text-gray-400 hidden">
-          <p>Выберите время бронирования:</p>
-          <p>1. Кликните для выбора времени начала</p>
-          <p>2. Кликните для выбора времени окончания</p>
-          <p>3. Нажмите на выбранное время для точной настройки</p>
+        <div
+          v-if="selectionEnd"
+          class="flex justify-between items-center text-sm"
+        >
+          <span class="text-gray-400">Длительность:</span>
+          <span class="text-indigo-400">{{ formatDuration() }}</span>
         </div>
       </div>
     </div>
@@ -180,9 +189,18 @@ import {
   parseISO,
   differenceInHours,
   differenceInMinutes,
-  addDays,
 } from "date-fns";
 import { ru } from "date-fns/locale";
+
+interface Workplace {
+  id: number;
+  name: string;
+  zone: {
+    id: number;
+    name: string;
+  };
+  bookings: Booking[];
+}
 
 interface Booking {
   id: number;
@@ -192,22 +210,22 @@ interface Booking {
 }
 
 const props = defineProps<{
-  bookings: Booking[];
+  workplaces: Workplace[];
   selectedDate: string;
 }>();
 
 const emit = defineEmits<{
-  (e: "time-selected", startTime: Date, endTime: Date): void;
+  (
+    e: "time-selected",
+    workplaceId: number,
+    startTime: Date,
+    endTime: Date
+  ): void;
 }>();
 
-const timelineRef = ref<HTMLElement | null>(null);
 const selectionStart = ref<Date | null>(null);
 const selectionEnd = ref<Date | null>(null);
-
-const isAdjusting = ref(false);
-const isAdjustingStart = ref(false);
-const isAdjustingEnd = ref(false);
-const adjustmentType = ref<"start" | "end" | null>(null);
+const selectedWorkplace = ref<Workplace | null>(null);
 
 // Time markers for the timeline (9:00 - 21:00)
 const timeMarkers = [
@@ -226,14 +244,14 @@ const timeMarkers = [
   "21:00",
 ];
 
-// Get all bookings for the selected date
-const allBookings = computed(() => {
+// Get bookings for a specific workplace
+const getWorkplaceBookings = (workplace: Workplace) => {
   const selectedDateStart = new Date(props.selectedDate);
   selectedDateStart.setHours(0, 0, 0, 0);
   const selectedDateEnd = new Date(selectedDateStart);
   selectedDateEnd.setHours(23, 59, 59, 999);
 
-  return props.bookings.filter((booking) => {
+  return workplace.bookings.filter((booking) => {
     const bookingStart = new Date(booking.startTime);
     const bookingEnd = new Date(booking.endTime);
 
@@ -250,10 +268,10 @@ const allBookings = computed(() => {
       localBookingEnd >= selectedDateStart
     );
   });
-});
+};
 
-// Calculate available time slots
-const availableSlots = computed(() => {
+// Calculate available slots for a workplace
+const getAvailableSlots = (workplace: Workplace) => {
   const slots = [];
   const selectedDate = new Date(props.selectedDate);
   selectedDate.setHours(9, 0, 0, 0); // Start at 9:00
@@ -261,7 +279,7 @@ const availableSlots = computed(() => {
   endTime.setHours(21, 0, 0, 0); // End at 21:00
 
   // Sort bookings by start time
-  const sortedBookings = [...allBookings.value].sort(
+  const sortedBookings = [...getWorkplaceBookings(workplace)].sort(
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
@@ -305,7 +323,7 @@ const availableSlots = computed(() => {
   }
 
   return slots;
-});
+};
 
 // Calculate selection width
 const selectionWidth = computed(() => {
@@ -385,29 +403,10 @@ const formatDuration = () => {
   return `${hours} ч ${minutes} мин`;
 };
 
-// Handle selection click for adjustment
-const handleSelectionClick = () => {
-  if (!selectionStart.value || !selectionEnd.value) return;
-
-  isAdjusting.value = true;
-  isAdjustingStart.value = true;
-  isAdjustingEnd.value = false;
-  adjustmentType.value = "start";
-};
-
-// Start adjusting specific time
-const startAdjusting = (type: "start" | "end") => {
-  isAdjusting.value = true;
-  isAdjustingStart.value = type === "start";
-  isAdjustingEnd.value = type === "end";
-  adjustmentType.value = type;
-};
-
 // Handle timeline click
-const handleTimelineClick = (event: MouseEvent) => {
-  if (!timelineRef.value) return;
-
-  const rect = timelineRef.value.getBoundingClientRect();
+const handleTimelineClick = (event: MouseEvent, workplace: Workplace) => {
+  const target = event.currentTarget as HTMLElement;
+  const rect = target.getBoundingClientRect();
   const clickPosition = event.clientX - rect.left;
   const percentage = (clickPosition / rect.width) * 100;
 
@@ -424,7 +423,8 @@ const handleTimelineClick = (event: MouseEvent) => {
   const newTime = new Date(startTime.getTime() + selectedMinutes * 60 * 1000);
 
   // Check if the selected time is in an available slot
-  const isAvailable = availableSlots.value.some((slot) => {
+  const availableSlots = getAvailableSlots(workplace);
+  const isAvailable = availableSlots.some((slot) => {
     const slotStart = new Date(
       startTime.getTime() + (slot.start / 100) * totalMinutes * 60 * 1000
     );
@@ -434,163 +434,75 @@ const handleTimelineClick = (event: MouseEvent) => {
     return newTime >= slotStart && newTime <= slotEnd;
   });
 
-  // Also check if the time is not in any confirmed or pending booking
-  const isNotBooked = !allBookings.value.some((booking) => {
-    if (booking.status !== "CONFIRMED" && booking.status !== "PENDING")
-      return false;
+  if (!isAvailable) return;
 
-    const bookingStart = convertToLocalTime(booking.startTime);
-    const bookingEnd = convertToLocalTime(booking.endTime);
+  if (!selectionStart.value) {
+    // First click - set start time
+    selectionStart.value = newTime;
+    selectionEnd.value = null;
+    selectedWorkplace.value = workplace;
+  } else if (
+    !selectionEnd.value &&
+    selectedWorkplace.value?.id === workplace.id
+  ) {
+    // Second click - set end time
+    // Check if the selected range would overlap with any booking
+    const wouldOverlap = getWorkplaceBookings(workplace).some((booking) => {
+      if (booking.status !== "CONFIRMED" && booking.status !== "PENDING")
+        return false;
 
-    // Handle overnight bookings
-    if (bookingEnd < bookingStart) {
-      return newTime >= bookingStart || newTime <= bookingEnd;
+      const bookingStart = convertToLocalTime(booking.startTime);
+      const bookingEnd = convertToLocalTime(booking.endTime);
+
+      // Handle overnight bookings
+      if (bookingEnd < bookingStart) {
+        return (
+          (selectionStart.value! >= bookingStart ||
+            selectionStart.value! <= bookingEnd) &&
+          (newTime >= bookingStart || newTime <= bookingEnd)
+        );
+      }
+
+      return (
+        (selectionStart.value! >= bookingStart &&
+          selectionStart.value! <= bookingEnd) ||
+        (newTime >= bookingStart && newTime <= bookingEnd) ||
+        (selectionStart.value! <= bookingStart && newTime >= bookingEnd)
+      );
+    });
+
+    if (wouldOverlap) {
+      // Reset selection if it would overlap
+      selectionStart.value = null;
+      selectionEnd.value = null;
+      selectedWorkplace.value = null;
+      return;
     }
 
-    return newTime >= bookingStart && newTime <= bookingEnd;
-  });
-
-  if (!isAvailable || !isNotBooked) return;
-
-  if (isAdjusting.value && adjustmentType.value) {
-    // Adjusting existing selection
-    if (adjustmentType.value === "start") {
-      // Check if new start time would overlap with any booking
-      const wouldOverlap = allBookings.value.some((booking) => {
-        if (booking.status !== "CONFIRMED" && booking.status !== "PENDING")
-          return false;
-        if (!selectionEnd.value) return false;
-
-        const bookingStart = convertToLocalTime(booking.startTime);
-        const bookingEnd = convertToLocalTime(booking.endTime);
-
-        // Handle overnight bookings
-        if (bookingEnd < bookingStart) {
-          return (
-            (newTime >= bookingStart || newTime <= bookingEnd) &&
-            (selectionEnd.value >= bookingStart ||
-              selectionEnd.value <= bookingEnd)
-          );
-        }
-
-        return (
-          (newTime >= bookingStart && newTime <= bookingEnd) ||
-          (selectionEnd.value >= bookingStart &&
-            selectionEnd.value <= bookingEnd) ||
-          (newTime <= bookingStart && selectionEnd.value >= bookingEnd)
-        );
-      });
-
-      if (wouldOverlap) return;
-
-      if (newTime < (selectionEnd.value || newTime)) {
-        selectionStart.value = newTime;
-      } else {
-        // Swap if new start time is after end time
-        selectionStart.value = selectionEnd.value;
-        selectionEnd.value = newTime;
-      }
+    if (newTime > selectionStart.value) {
+      selectionEnd.value = newTime;
+      emit(
+        "time-selected",
+        workplace.id,
+        selectionStart.value,
+        selectionEnd.value
+      );
     } else {
-      // Check if new end time would overlap with any booking
-      const wouldOverlap = allBookings.value.some((booking) => {
-        if (booking.status !== "CONFIRMED" && booking.status !== "PENDING")
-          return false;
-        if (!selectionStart.value) return false;
-
-        const bookingStart = convertToLocalTime(booking.startTime);
-        const bookingEnd = convertToLocalTime(booking.endTime);
-
-        // Handle overnight bookings
-        if (bookingEnd < bookingStart) {
-          return (
-            (selectionStart.value >= bookingStart ||
-              selectionStart.value <= bookingEnd) &&
-            (newTime >= bookingStart || newTime <= bookingEnd)
-          );
-        }
-
-        return (
-          (selectionStart.value >= bookingStart &&
-            selectionStart.value <= bookingEnd) ||
-          (newTime >= bookingStart && newTime <= bookingEnd) ||
-          (selectionStart.value <= bookingStart && newTime >= bookingEnd)
-        );
-      });
-
-      if (wouldOverlap) return;
-
-      if (newTime > (selectionStart.value || newTime)) {
-        selectionEnd.value = newTime;
-      } else {
-        // Swap if new end time is before start time
-        selectionEnd.value = selectionStart.value;
-        selectionStart.value = newTime;
-      }
-    }
-
-    // Reset adjustment state
-    isAdjusting.value = false;
-    isAdjustingStart.value = false;
-    isAdjustingEnd.value = false;
-    adjustmentType.value = null;
-
-    // Emit updated times
-    if (selectionStart.value && selectionEnd.value) {
-      emit("time-selected", selectionStart.value, selectionEnd.value);
+      // If end time is before start time, swap them
+      selectionEnd.value = selectionStart.value;
+      selectionStart.value = newTime;
+      emit(
+        "time-selected",
+        workplace.id,
+        selectionStart.value,
+        selectionEnd.value
+      );
     }
   } else {
-    // Normal selection flow
-    if (!selectionStart.value) {
-      // First click - set start time
-      selectionStart.value = newTime;
-      selectionEnd.value = null;
-    } else if (!selectionEnd.value) {
-      // Second click - set end time
-      // Check if the selected range would overlap with any booking
-      const wouldOverlap = allBookings.value.some((booking) => {
-        if (booking.status !== "CONFIRMED" && booking.status !== "PENDING")
-          return false;
-
-        const bookingStart = convertToLocalTime(booking.startTime);
-        const bookingEnd = convertToLocalTime(booking.endTime);
-
-        // Handle overnight bookings
-        if (bookingEnd < bookingStart) {
-          return (
-            (selectionStart.value! >= bookingStart ||
-              selectionStart.value! <= bookingEnd) &&
-            (newTime >= bookingStart || newTime <= bookingEnd)
-          );
-        }
-
-        return (
-          (selectionStart.value! >= bookingStart &&
-            selectionStart.value! <= bookingEnd) ||
-          (newTime >= bookingStart && newTime <= bookingEnd) ||
-          (selectionStart.value! <= bookingStart && newTime >= bookingEnd)
-        );
-      });
-
-      if (wouldOverlap) {
-        // Reset selection if it would overlap
-        selectionStart.value = null;
-        return;
-      }
-
-      if (newTime > selectionStart.value) {
-        selectionEnd.value = newTime;
-        emit("time-selected", selectionStart.value, selectionEnd.value);
-      } else {
-        // If end time is before start time, swap them
-        selectionEnd.value = selectionStart.value;
-        selectionStart.value = newTime;
-        emit("time-selected", selectionStart.value, selectionEnd.value);
-      }
-    } else {
-      // Third click - reset selection
-      selectionStart.value = newTime;
-      selectionEnd.value = null;
-    }
+    // Reset selection and start new one
+    selectionStart.value = newTime;
+    selectionEnd.value = null;
+    selectedWorkplace.value = workplace;
   }
 };
 </script>

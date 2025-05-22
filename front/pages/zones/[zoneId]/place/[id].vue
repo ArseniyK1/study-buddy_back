@@ -1,3 +1,4 @@
+<!-- route: /zones/:zoneId/place/:id -->
 <template>
   <div class="bg-gray-900">
     <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
@@ -52,31 +53,27 @@
           />
         </div>
 
-        <!-- Booking Timeline -->
-
         <!-- Booking Section -->
         <div class="bg-gray-800 rounded-lg shadow border border-gray-700 p-6">
           <h2 class="text-xl font-semibold text-gray-200 mb-6">Бронирование</h2>
 
-          <!-- Date and Time Selection -->
-          <div class="grid grid-cols-1 gap-6 mb-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">
-                Дата
-              </label>
-              <input
-                type="date"
-                v-model="bookingDate"
-                :min="minDate"
-                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+          <!-- Date Selection -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-400 mb-2">
+              Дата
+            </label>
+            <input
+              type="date"
+              v-model="bookingDate"
+              :min="minDate"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
           <!-- Booking Timeline -->
           <div class="mb-6">
             <BookingTimeline
-              :bookings="workplace.bookings"
+              :workplaces="[workplace]"
               :selected-date="bookingDate"
               @time-selected="handleTimeSelected"
             />
@@ -194,7 +191,11 @@ const canBook = computed(() => {
 });
 
 // Methods
-const handleTimeSelected = (startTime: Date, endTime: Date) => {
+const handleTimeSelected = (
+  workplaceId: number,
+  startTime: Date,
+  endTime: Date
+) => {
   bookingStartTime.value = startTime;
   bookingEndTime.value = endTime;
 };

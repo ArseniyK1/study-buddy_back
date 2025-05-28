@@ -3,8 +3,43 @@ import { ref, computed } from "vue";
 import api from "../services/api";
 import { useToast } from "vue-toastification";
 
+interface FindAllUsersRequest {
+  nameFilter?: string;
+  isBanned?: boolean | null;
+  hasTelegram?: boolean | null;
+  roleId?: number;
+  offset: number;
+  limit: number;
+}
+
+interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  phone?: string;
+  role: {
+    id: number;
+    value: string;
+    description: string;
+  };
+  banned?: boolean;
+  telegramId?: string;
+}
+
+interface UserListResponse {
+  users: User[];
+}
+
 interface ApiError extends Error {
   message: string;
+}
+
+interface Role {
+  id: number;
+  value: string;
+  description: string;
 }
 
 export const useAuthStore = defineStore("auth", () => {
@@ -12,10 +47,19 @@ export const useAuthStore = defineStore("auth", () => {
   const refreshToken = ref<string | null>(null);
   const user = ref<any | null>(null);
   const isInitialized = ref(false);
+  const users = ref<any[]>([]);
+  const roles = ref<Role[]>([
+    { id: 1, value: "USER", description: "Пользователь" },
+    { id: 2, value: "ADMIN", description: "Администратор" },
+    { id: 3, value: "MANAGER", description: "Менеджер" },
+    { id: 4, value: "SUPER_ADMIN", description: "Супер администратор" },
+  ]);
   const toast = useToast();
 
   const isAuthenticated = computed(() => !!accessToken.value);
   const getProfileComputed = computed(() => user.value);
+  const getUsersComputed = computed(() => users.value);
+  const getRolesComputed = computed(() => roles.value);
 
   function setTokens(access: string | null, refresh: string | null) {
     accessToken.value = access;
@@ -118,6 +162,26 @@ export const useAuthStore = defineStore("auth", () => {
     setUser(null);
   }
 
+  const findAllUsers = async (
+    request: FindAllUsersRequest
+  ): Promise<UserListResponse> => {
+    try {
+      const response = await api.post("/auth/all-users", {
+        nameFilter: request.nameFilter || "",
+        isBanned: request.isBanned,
+        hasTelegram: request.hasTelegram,
+        roleId: request.roleId || 0,
+        offset: request.offset,
+        limit: request.limit,
+      });
+      users.value = response.data.users;
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+  };
+
   return {
     accessToken,
     refreshToken,
@@ -125,11 +189,14 @@ export const useAuthStore = defineStore("auth", () => {
     isAuthenticated,
     isInitialized,
     getProfileComputed,
+    getUsersComputed,
+    getRolesComputed,
     initialize,
     setTokens,
     signIn,
     signUp,
     fetchUser,
     logout,
+    findAllUsers,
   };
 });

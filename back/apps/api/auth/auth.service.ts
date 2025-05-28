@@ -15,6 +15,7 @@ import { Cache } from 'cache-manager';
 import { Metadata } from '@grpc/grpc-js';
 import { from, Observable } from 'rxjs';
 import { handleRequest } from '../common/grpc/grpc.handle';
+import { SignUpDto } from './dto/sing-up.dto';
 
 @Injectable()
 export class AuthService implements OnModuleInit, AuthServiceClient {
@@ -72,6 +73,16 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     console.log('request', JSON.stringify(request));
     return from(
       handleRequest(() => this.authService.refreshToken(request, metadata)),
+    );
+  }
+
+  createUser(dto: SignUpDto, userId: number): Observable<AuthResponse> {
+    return from(handleRequest(() => this.authService.createUser(dto, userId)));
+  }
+
+  getUserWorkspaces(userId: number): Observable<any> {
+    return from(
+      handleRequest(() => this.authService.getUserWorkspaces(userId)),
     );
   }
 }

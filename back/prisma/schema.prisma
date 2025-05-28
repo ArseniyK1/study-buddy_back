@@ -17,6 +17,11 @@ model User {
   phone             String             @map("phone")
   password          String
   roleId            Int                @map("role_id")
+  banned            Boolean            @default(false)
+  reason_banned     String?            @map("reason_banned")
+  telegramId        String?            @map("telegram_id")
+  telegramUsername  String?            @map("telegram_username")
+
   bookings          Booking[]
   role              Role               @relation(fields: [roleId], references: [id])
   workspaces        Workspace[]

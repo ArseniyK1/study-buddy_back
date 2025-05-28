@@ -58,7 +58,7 @@
     <button
       v-if="user?.role?.id === 2 || isSuperAdmin"
       @click="showCreateDialog = true"
-      class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transition-colors duration-200"
+      class="fixed bottom-6 right-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transition-colors duration-200"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

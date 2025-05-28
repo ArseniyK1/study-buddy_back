@@ -46,10 +46,4 @@ export class AuthController {
   getProfile(@Request() req: any) {
     return this.authService.getProfile({ id: req.user.userId });
   }
-
-  @Get('workspaces')
-  @ApiOperation({ summary: 'Get user workspaces' })
-  getUserWorkspaces(@Request() req: any) {
-    return this.authService.getUserWorkspaces(req.user.userId);
-  }
 }

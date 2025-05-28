@@ -20,6 +20,7 @@ WHERE (
         OR a.first_name ~* $1::text
         OR a.last_name ~* $1::text
         OR a.middle_name ~* $1::text
+        OR a.email ~* $1::text
     )
     AND (
         $2::boolean IS FALSE

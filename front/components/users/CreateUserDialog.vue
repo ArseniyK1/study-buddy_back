@@ -25,23 +25,20 @@
         </select>
       </div>
 
-      <!-- Workspace Selection for Manager Role -->
-      <div v-if="isManagerRole" class="mb-4">
+      <!-- Workspace Selection for Manager or Admin Role -->
+      <div v-if="isManagerOrAdminRole" class="mb-4">
         <label class="block text-sm font-medium text-gray-300 mb-1"
           >Коворкинг</label
         >
-        <select
+        <CommonInputSelect
           v-model="formData.workspaceId"
-          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option
-            v-for="workspace in workspaces"
-            :key="workspace.id"
-            :value="workspace.id"
-          >
-            {{ workspace.name }}
-          </option>
-        </select>
+          :options="workspaces"
+          placeholder="Поиск коворкинга..."
+          :is-loading="isLoadingWorkspaces"
+          :has-more="hasMoreWorkspaces"
+          @search="handleWorkspaceSearch"
+          @load-more="handleLoadMoreWorkspaces"
+        />
       </div>
 
       <!-- User Form -->
@@ -129,10 +126,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "vue-toastification";
 import api from "@/services/api";
+import { useWorkspaceStore } from "@/stores/workspace";
+import CommonInputSelect from "@/components/common/CommonInputSelect.vue";
 
 interface Props {
   modelValue: boolean;
@@ -149,6 +148,7 @@ const emit = defineEmits<Emits>();
 
 const authStore = useAuthStore();
 const toast = useToast();
+const workspaceStore = useWorkspaceStore();
 
 const formData = ref({
   email: "",
@@ -163,17 +163,23 @@ const formData = ref({
   workspaceId: undefined as number | undefined,
 });
 
+const searchQuery = ref("");
+const workspaceOffset = ref(0);
+const workspaceLimit = 20;
+const isLoadingWorkspaces = ref(false);
+const hasMoreWorkspaces = ref(true);
+
 // Проверяем, является ли текущий пользователь супер админом
 const isSuperAdmin = computed(
   () => authStore.user?.role?.value === "SUPER_ADMIN"
 );
 
-// Проверяем, выбрана ли роль менеджера
-const isManagerRole = computed(() => {
+// Проверяем, выбрана ли роль менеджера или админа
+const isManagerOrAdminRole = computed(() => {
   const selectedRole = authStore.getRolesComputed.find(
     (r) => r.id === formData.value.roleId
   );
-  return selectedRole?.value === "MANAGER";
+  return selectedRole?.value === "MANAGER" || selectedRole?.value === "ADMIN";
 });
 
 // Доступные роли для создания
@@ -184,13 +190,16 @@ const availableRoles = computed(() => {
   return authStore.getRolesComputed.filter((r) => r.value === "MANAGER");
 });
 
+// Получаем список коворкингов из стора
+const workspaces = computed(() => workspaceStore.approvedWorkspaces);
+
 // Валидация формы
 const isFormValid = computed(() => {
   const { email, password, name, phone, roleId, workspaceId } = formData.value;
   const hasRequiredFields =
     email && password && name.firstName && name.lastName && phone && roleId;
 
-  if (isManagerRole.value) {
+  if (isManagerOrAdminRole.value) {
     return hasRequiredFields && workspaceId;
   }
 
@@ -237,4 +246,53 @@ watch(
     }
   }
 );
+
+// Загружаем коворкинги при монтировании и при поиске
+const loadWorkspaces = async (query: string = "", reset: boolean = false) => {
+  if (reset) {
+    workspaceOffset.value = 0;
+    hasMoreWorkspaces.value = true;
+  }
+
+  if (!hasMoreWorkspaces.value && !reset) return;
+
+  isLoadingWorkspaces.value = true;
+  try {
+    const { data } = await api.get("/workspaces", {
+      params: {
+        offset: workspaceOffset.value,
+        limit: workspaceLimit,
+        query,
+        status: true, // передаем boolean вместо строки
+      },
+    });
+
+    if (reset) {
+      workspaceStore.workspaces = data;
+    } else {
+      workspaceStore.workspaces = [...workspaceStore.workspaces, ...data];
+    }
+
+    hasMoreWorkspaces.value = data.length === workspaceLimit;
+    workspaceOffset.value += data.length;
+  } catch (error) {
+    console.error("Error loading workspaces:", error);
+    toast.error("Не удалось загрузить список коворкингов");
+  } finally {
+    isLoadingWorkspaces.value = false;
+  }
+};
+
+const handleWorkspaceSearch = (query: string) => {
+  loadWorkspaces(query, true);
+};
+
+const handleLoadMoreWorkspaces = () => {
+  loadWorkspaces(searchQuery.value);
+};
+
+// Загружаем начальные данные при монтировании
+onMounted(async () => {
+  await loadWorkspaces();
+});
 </script>

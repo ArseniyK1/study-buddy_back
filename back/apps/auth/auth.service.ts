@@ -203,9 +203,9 @@ export class AuthService {
       data: {
         email: dto.email,
         password: hashPassword,
-        firstName: dto.name.firstName,
-        lastName: dto.name.lastName,
-        middleName: dto.name.middleName,
+        firstName: dto.name?.firstName || '',
+        lastName: dto.name?.lastName || '',
+        middleName: dto.name?.middleName || '',
         phone: dto.phone,
         roleId: role.id,
       },

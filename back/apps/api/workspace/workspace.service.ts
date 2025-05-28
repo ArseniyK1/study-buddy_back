@@ -61,7 +61,7 @@ export class WorkspaceService {
               },
             ],
           },
-          status !== undefined ? { approved: status } : {},
+          status !== undefined ? { approved: !!status } : {},
         ],
       },
       include: {

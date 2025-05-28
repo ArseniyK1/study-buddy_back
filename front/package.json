@@ -13,6 +13,7 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxtjs/tailwindcss": "^6.11.3",
+    "@types/lodash": "^4.17.17",
     "nuxt": "^3.10.3",
     "ts-node": "^10.9.2"
   },

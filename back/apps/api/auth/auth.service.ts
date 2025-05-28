@@ -75,14 +75,4 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
       handleRequest(() => this.authService.refreshToken(request, metadata)),
     );
   }
-
-  createUser(dto: SignUpDto, userId: number): Observable<AuthResponse> {
-    return from(handleRequest(() => this.authService.createUser(dto, userId)));
-  }
-
-  getUserWorkspaces(userId: number): Observable<any> {
-    return from(
-      handleRequest(() => this.authService.getUserWorkspaces(userId)),
-    );
-  }
 }

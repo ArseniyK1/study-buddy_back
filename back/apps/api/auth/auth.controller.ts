@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request } from '@nestjs/common';
+import { Body, Controller, Post, Request, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sing-in.dto';
 import {
@@ -28,8 +28,11 @@ export class AuthController {
   @Post('sign-up')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: SignUpDto })
-  signUp(@Body() dto: SignUpDto): Observable<AuthResponse> {
-    return this.authService.signUp(dto);
+  signUp(
+    @Body() dto: SignUpDto,
+    @Request() req?: any,
+  ): Observable<AuthResponse> {
+    return this.authService.signUp(dto, req?.user?.userId);
   }
 
   @Post('all-users')
@@ -42,5 +45,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getProfile(@Request() req: any) {
     return this.authService.getProfile({ id: req.user.userId });
+  }
+
+  @Get('workspaces')
+  @ApiOperation({ summary: 'Get user workspaces' })
+  getUserWorkspaces(@Request() req: any) {
+    return this.authService.getUserWorkspaces(req.user.userId);
   }
 }

@@ -80,4 +80,9 @@ export class SignUpDto implements SignUpRequest {
   @IsNumber({}, { message: 'Поле roleId должно быть типа NUMBER' })
   @IsOptional()
   roleId?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  workspaceId?: number;
 }

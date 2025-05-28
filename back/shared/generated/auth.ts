@@ -23,6 +23,8 @@ export interface SignUpRequest {
   name: UserName | undefined;
   roleId?: number | undefined;
   phone: string;
+  /** ID коворкинга для привязки менеджера */
+  workspaceId?: number | undefined;
 }
 
 export interface GetProfileRequest {
@@ -30,7 +32,27 @@ export interface GetProfileRequest {
 }
 
 export interface FindAllUsersRequest {
-  nameFilter?: string | undefined;
+  nameFilter?:
+    | string
+    | undefined;
+  /** null - any, true - banned, false - not banned */
+  isBanned?:
+    | boolean
+    | undefined;
+  /** null - any, true - has telegram, false - no telegram */
+  hasTelegram?:
+    | boolean
+    | undefined;
+  /** null - any role, specific role_id for filtering */
+  roleId?:
+    | number
+    | undefined;
+  /** default 0 */
+  offset?:
+    | number
+    | undefined;
+  /** default 100 */
+  limit?: number | undefined;
 }
 
 export interface RefreshTokenRequest {
@@ -139,6 +161,9 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
     if (message.phone !== "") {
       writer.uint32(42).string(message.phone);
     }
+    if (message.workspaceId !== undefined) {
+      writer.uint32(48).uint32(message.workspaceId);
+    }
     return writer;
   },
 
@@ -187,6 +212,14 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
           }
 
           message.phone = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.workspaceId = reader.uint32();
           continue;
         }
       }
@@ -245,6 +278,21 @@ export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
     if (message.nameFilter !== undefined) {
       writer.uint32(10).string(message.nameFilter);
     }
+    if (message.isBanned !== undefined) {
+      writer.uint32(16).bool(message.isBanned);
+    }
+    if (message.hasTelegram !== undefined) {
+      writer.uint32(24).bool(message.hasTelegram);
+    }
+    if (message.roleId !== undefined) {
+      writer.uint32(32).uint32(message.roleId);
+    }
+    if (message.offset !== undefined) {
+      writer.uint32(40).uint32(message.offset);
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(48).uint32(message.limit);
+    }
     return writer;
   },
 
@@ -261,6 +309,46 @@ export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
           }
 
           message.nameFilter = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.isBanned = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.hasTelegram = reader.bool();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.roleId = reader.uint32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.offset = reader.uint32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.limit = reader.uint32();
           continue;
         }
       }

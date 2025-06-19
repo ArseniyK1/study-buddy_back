@@ -47,7 +47,7 @@
         </div>
 
         <!-- Role Filter -->
-        <div>
+        <div v-if="authStore.getProfileComputed.role.id !== 3">
           <label class="block text-sm font-medium text-gray-300 mb-1"
             >Роль</label
           >
@@ -120,6 +120,11 @@
               >
                 Telegram
               </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+              >
+                Бан
+              </th>
             </tr>
           </thead>
           <tbody class="bg-gray-800 divide-y divide-gray-700">
@@ -142,21 +147,87 @@
                 {{ user.role.description }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  :class="[
-                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                    user.banned
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800',
-                  ]"
-                >
-                  {{ user.banned ? "Забанен" : "Активен" }}
-                </span>
+                <div class="relative group">
+                  <span
+                    :class="[
+                      'px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-help',
+                      user.banned
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800',
+                    ]"
+                  >
+                    {{ user.banned ? "Забанен" : "Активен" }}
+                  </span>
+                  <!-- Tooltip -->
+                  <div
+                    v-if="user.banned && user.reason_banned"
+                    class="absolute left-0 bottom-full mb-2 hidden group-hover:block"
+                  >
+                    <div
+                      class="bg-gray-900 text-gray-200 text-xs rounded py-1 px-2 whitespace-nowrap"
+                    >
+                      {{ user.reason_banned }}
+                      <div
+                        class="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-900 transform rotate-45"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                 <span v-if="user.telegramId" class="text-green-400">✓</span>
                 <span v-else class="text-red-400">✗</span>
               </td>
+              <td
+                v-if="canBanUsers && !user.banned"
+                class="px-6 py-4 whitespace-nowrap text-sm text-gray-300"
+              >
+                <div class="relative">
+                  <button
+                    @click="showBanForm(user)"
+                    class="text-red-500 hover:text-red-700 focus:outline-none"
+                    :disabled="user.banned"
+                  >
+                    <NoSymbolIcon class="h-5 w-5" />
+                  </button>
+                  <!-- Ban Form Popup -->
+                  <div
+                    v-if="selectedUser?.id === user.id && showBanPopup"
+                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                  >
+                    <div
+                      class="relative w-64 bg-gray-700 rounded-lg shadow-lg p-4"
+                    >
+                      <div class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-300">
+                          Причина бана
+                        </label>
+                        <input
+                          v-model="banReason"
+                          type="text"
+                          class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="Введите причину бана"
+                        />
+                        <div class="flex justify-end space-x-2">
+                          <button
+                            @click="cancelBan"
+                            class="px-3 py-1 text-sm text-gray-300 hover:text-gray-100"
+                          >
+                            Отмена
+                          </button>
+                          <button
+                            @click="submitBan"
+                            class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                          >
+                            Забанить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td v-else><span class="text-green-400">✓</span></td>
             </tr>
           </tbody>
         </table>
@@ -188,6 +259,7 @@ import { useAuthStore } from "@/stores/auth";
 import Pagination from "@/components/common/Pagination.vue";
 import CreateUserDialog from "@/components/users/CreateUserDialog.vue";
 import { PlusIcon } from "@heroicons/vue/24/outline";
+import { NoSymbolIcon } from "@heroicons/vue/24/solid";
 import { useToast } from "vue-toastification";
 import api from "@/services/api";
 
@@ -202,9 +274,12 @@ const users = computed(() => authStore.getUsersComputed);
 const roles = computed(() => authStore.getRolesComputed);
 const currentPage = ref(1);
 const hasMore = ref(true);
-const pageSize = 100;
+const pageSize = 99;
 const showCreateDialog = ref(false);
 const userWorkspaces = ref<Workspace[]>([]);
+const showBanPopup = ref(false);
+const selectedUser = ref<any>(null);
+const banReason = ref("");
 
 const filters = ref({
   nameFilter: "",
@@ -219,13 +294,21 @@ const canCreateUsers = computed(() => {
   return userRole === "SUPER_ADMIN" || userRole === "ADMIN";
 });
 
+// Проверяем права на бан пользователей
+const canBanUsers = computed(() => {
+  const userRole = authStore.user?.role?.value;
+  return userRole === "SUPER_ADMIN" || userRole === "ADMIN";
+});
+
 const fetchUsers = async (page: number = 1) => {
   try {
+    console.log();
     await authStore.findAllUsers({
       nameFilter: filters.value.nameFilter,
       isBanned: filters.value.isBanned,
       hasTelegram: filters.value.hasTelegram,
       roleId: filters.value.roleId,
+      currentRoleId: authStore.getProfileComputed.role.id,
       offset: (page - 1) * pageSize,
       limit: pageSize + 1,
     });
@@ -249,21 +332,44 @@ const applyFilters = () => {
   fetchUsers(1);
 };
 
-// Загрузка коворкингов пользователя
-const fetchUserWorkspaces = async () => {
+const showBanForm = (user: any) => {
+  selectedUser.value = user;
+  showBanPopup.value = true;
+  banReason.value = "";
+};
+
+const cancelBan = () => {
+  showBanPopup.value = false;
+  selectedUser.value = null;
+  banReason.value = "";
+};
+
+const submitBan = async () => {
+  if (!selectedUser.value || !banReason.value) return;
+
   try {
-    const response = await api.get("/auth/workspaces");
-    userWorkspaces.value = response.data;
+    await api.put("/auth/update-profile", {
+      id: selectedUser.value.id,
+      is_banned: true,
+      ban_reason: banReason.value,
+    });
+
+    toast.success("Пользователь успешно забанен");
+    await fetchUsers(currentPage.value);
+    cancelBan();
   } catch (error: any) {
-    console.error("Error fetching workspaces:", error);
-    toast.error("Не удалось загрузить список коворкингов");
+    console.error("Error banning user:", error);
+    toast.error(
+      error.response?.data?.message || "Ошибка при бане пользователя"
+    );
   }
 };
 
 onMounted(() => {
   fetchUsers(1);
-  if (canCreateUsers.value) {
-    fetchUserWorkspaces();
-  }
+});
+
+onUnmounted(() => {
+  authStore.resetUsers();
 });
 </script>

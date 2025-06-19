@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { GrpcMethod } from '@nestjs/microservices';
+import { Metadata } from '@grpc/grpc-js';
 import {
   AuthResponse,
   AuthServiceController,
@@ -10,6 +11,7 @@ import {
   RefreshTokenRequest,
   SignInRequest,
   SignUpRequest,
+  UpdateUserRequest,
   User,
   UserListResponse,
 } from 'shared/generated/auth';
@@ -42,5 +44,14 @@ export class AuthController implements AuthServiceController {
   @GrpcMethod('AuthService', 'RefreshToken')
   async refreshToken(data: RefreshTokenRequest): Promise<AuthResponse> {
     return await this.authService.refreshToken(data.refreshToken);
+  }
+
+  @GrpcMethod('AuthService', 'UpdateUserInfo')
+  async updateUserInfo(
+    data: UpdateUserRequest,
+    metadata: Metadata,
+  ): Promise<User> {
+    const role = metadata.get('role')[0]?.toString() || '';
+    return await this.authService.updateUserInfo(data, role);
   }
 }

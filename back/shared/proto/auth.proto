@@ -12,6 +12,7 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse) {}
   rpc FindAllUsers (FindAllUsersRequest) returns (UserListResponse) {}
   rpc GetProfile (GetProfileRequest) returns (User) {}
+  rpc UpdateUserInfo (UpdateUserRequest) returns (User) {}
 }
 
 message SignInRequest {
@@ -28,17 +29,25 @@ message SignUpRequest {
   optional uint32 workspace_id = 6; // ID коворкинга для привязки менеджера
 }
 
+message UpdateUserRequest {
+  SignUpRequest user_info = 1;
+  optional string ban_reason = 2;
+  uint32 id = 3;
+  optional bool is_banned = 4;  // New field for ban status
+}
+
 message GetProfileRequest {
   uint64 id = 1;
 }
 
 message FindAllUsersRequest {
   optional string name_filter = 1;
-  optional bool is_banned = 2;      // null - any, true - banned, false - not banned
-  optional bool has_telegram = 3;   // null - any, true - has telegram, false - no telegram
-  optional uint32 role_id = 4;      // null - any role, specific role_id for filtering
-  optional uint32 offset = 5;       // default 0
-  optional uint32 limit = 6;        // default 100
+  optional bool is_banned = 2;   
+  optional bool has_telegram = 3;
+  optional uint32 role_id = 4;   
+  optional uint32 offset = 5;    
+  optional uint32 limit = 6;     
+  uint32 current_role_id = 7;
 }
 
 message RefreshTokenRequest {
@@ -68,7 +77,9 @@ message User {
   optional string middle_name = 4;
   string email = 5;
   string phone = 6;
-  Role role = 7;
+  bool banned = 7;
+  string reason_banned = 8;
+  Role role = 9;
 }
 
 message Role {

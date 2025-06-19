@@ -10,7 +10,10 @@ import { Type } from 'class-transformer';
 import { SignUpRequest, User } from 'shared/generated/auth';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { faker } from '@faker-js/faker';
-class UserNameDto implements Omit<User, 'id' | 'role' | 'email' | 'phone'> {
+class UserNameDto
+  implements
+    Omit<User, 'id' | 'role' | 'email' | 'phone' | 'banned' | 'reasonBanned'>
+{
   @ApiProperty({
     description: 'User first name',
     example: faker.person.firstName(),

@@ -11,11 +11,14 @@ import {
   User,
   UserListResponse,
   Role,
+  UpdateUserRequest,
 } from 'shared/generated/auth';
 import { RpcException } from '@nestjs/microservices';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { getAllUsers } from '@prisma/client/sql';
 import { SignUpDto } from '@app/api/auth/dto/sing-up.dto';
+import { IRequest } from '@shared/types/IRequest.interface';
+import { Role as RoleEnum } from '@shared/types/roles.enum';
 
 @Injectable()
 export class AuthService {
@@ -91,6 +94,8 @@ export class AuthService {
       ...user,
       middleName: user.middleName || undefined,
       role: user.role as unknown as Role,
+      banned: user.banned,
+      reasonBanned: user.reason_banned || '',
     };
   }
 
@@ -98,101 +103,17 @@ export class AuthService {
     dto: SignUpRequest,
     currentUserId?: number,
   ): Promise<AuthResponse> {
+    if (!dto.roleId) {
+      throw new RpcException({
+        code: Status.INVALID_ARGUMENT,
+        message: 'Role ID is required!',
+      });
+    }
     const user = await this.findOne(dto.email);
     if (!!user?.id) {
       throw new RpcException({
         code: Status.ALREADY_EXISTS,
         message: 'Пользователь с таким email уже существует!',
-      });
-    }
-
-    // Если есть currentUserId, значит это создание пользователя с правами
-    if (currentUserId) {
-      const currentUser = await this.prisma.user.findUnique({
-        where: { id: currentUserId },
-        include: { role: true },
-      });
-
-      if (!currentUser) {
-        throw new RpcException({
-          code: Status.NOT_FOUND,
-          message: 'Текущий пользователь не найден!',
-        });
-      }
-
-      // Проверяем права на создание пользователя
-      if (currentUser.role.value === 'SUPER_ADMIN') {
-        // Супер админ может создавать любых пользователей, кроме супер админов
-        const role = await this.prisma.role.findUnique({
-          where: { id: dto.roleId },
-        });
-
-        if (!role || role.value === 'SUPER_ADMIN') {
-          throw new RpcException({
-            code: Status.PERMISSION_DENIED,
-            message: 'Нельзя создать пользователя с такой ролью!',
-          });
-        }
-      } else if (currentUser.role.value === 'ADMIN') {
-        // Админ может создавать только менеджеров в своем коворкинге
-        if (!dto.workspaceId) {
-          throw new RpcException({
-            code: Status.INVALID_ARGUMENT,
-            message: 'Необходимо указать коворкинг!',
-          });
-        }
-
-        const userWorkspaces = await this.getUserWorkspaces(currentUserId);
-        if (!userWorkspaces.some((w) => w.id === dto.workspaceId)) {
-          throw new RpcException({
-            code: Status.PERMISSION_DENIED,
-            message:
-              'У вас нет прав на создание пользователей в этом коворкинге!',
-          });
-        }
-
-        const managerRole = await this.prisma.role.findFirst({
-          where: { value: 'MANAGER' },
-        });
-
-        if (!managerRole) {
-          throw new RpcException({
-            code: Status.INTERNAL,
-            message: 'Роль менеджера не найдена!',
-          });
-        }
-
-        dto.roleId = managerRole.id;
-      } else {
-        throw new RpcException({
-          code: Status.PERMISSION_DENIED,
-          message: 'У вас нет прав на создание пользователей!',
-        });
-      }
-    } else {
-      // Обычная регистрация - только USER роль
-      const userRole = await this.prisma.role.findFirst({
-        where: { value: 'USER' },
-      });
-
-      if (!userRole) {
-        throw new RpcException({
-          code: Status.INTERNAL,
-          message: 'Роль пользователя не найдена!',
-        });
-      }
-
-      dto.roleId = userRole.id;
-    }
-
-    const role = await this.prisma.role.findUnique({
-      where: { id: dto.roleId },
-    });
-
-    if (!role) {
-      throw new RpcException({
-        code: Status.INVALID_ARGUMENT,
-        message: 'Указана несуществующая роль!',
       });
     }
 
@@ -207,16 +128,29 @@ export class AuthService {
         lastName: dto.name?.lastName || '',
         middleName: dto.name?.middleName || '',
         phone: dto.phone,
-        roleId: role.id,
+        roleId: Number(dto.roleId),
+      },
+      include: {
+        role: true,
       },
     });
 
-    // Если указан workspaceId и роль MANAGER, создаем связь с коворкингом
-    if (dto.workspaceId && role.value === 'MANAGER') {
+    if (!!dto.workspaceId && dto.roleId === 3) {
       await this.prisma.workspaceManager.create({
         data: {
-          workspaceId: dto.workspaceId,
           managerId: newUser.id,
+          workspaceId: dto.workspaceId,
+        },
+      });
+    }
+
+    if (!!dto.workspaceId && dto.roleId === 2) {
+      await this.prisma.workspace.update({
+        data: {
+          ownerId: newUser.id,
+        },
+        where: {
+          id: dto.workspaceId,
         },
       });
     }
@@ -224,7 +158,7 @@ export class AuthService {
     const payload = {
       userId: newUser.id,
       email: newUser.email,
-      role: role.value,
+      role: newUser.role.value,
     };
 
     return {
@@ -238,6 +172,7 @@ export class AuthService {
   }
 
   async findAllUsers(dto: FindAllUsersRequest): Promise<UserListResponse> {
+    console.log(dto);
     const users = await this.prisma.$queryRawTyped(
       getAllUsers(
         dto.nameFilter || '',
@@ -246,6 +181,7 @@ export class AuthService {
         dto.roleId ?? 0,
         dto.offset ?? 0,
         dto.limit ?? 100,
+        +dto.currentRoleId,
       ),
     );
 
@@ -258,6 +194,9 @@ export class AuthService {
         middleName: user.middle_name || undefined,
         phone: user.phone,
         role: user.role as unknown as Role,
+        banned: user.banned || false,
+        reasonBanned: user.reason_banned || '', // <-- fix here
+        telegramId: user.telegram_id,
       })),
     };
   }
@@ -299,18 +238,14 @@ export class AuthService {
     }
   }
 
-  // Новый метод для получения коворкингов пользователя
-  async getUserWorkspaces(userId: number) {
+  async updateUserInfo(
+    dto: UpdateUserRequest,
+    currentUserRole: string,
+  ): Promise<User> {
+    console.log(currentUserRole);
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        workspaces: true, // Коворкинги, где пользователь владелец
-        managedWorkspaces: {
-          include: {
-            workspace: true,
-          },
-        },
-      },
+      where: { id: dto.id },
+      include: { role: true },
     });
 
     if (!user) {
@@ -320,10 +255,54 @@ export class AuthService {
       });
     }
 
-    // Объединяем коворкинги, где пользователь владелец и менеджер
-    const ownedWorkspaces = user.workspaces;
-    const managedWorkspaces = user.managedWorkspaces.map((wm) => wm.workspace);
+    const updateData: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      middleName: string | null;
+      phone: string;
+      roleId: number;
+      banned?: boolean;
+      reason_banned?: string | null;
+    } = {
+      email: dto.userInfo?.email || user.email,
+      firstName: dto.userInfo?.name?.firstName || user.firstName,
+      lastName: dto.userInfo?.name?.lastName || user.lastName,
+      middleName: dto.userInfo?.name?.middleName || user.middleName,
+      phone: dto.userInfo?.phone || user.phone,
+      roleId: dto.userInfo?.roleId || user.roleId,
+    };
 
-    return [...ownedWorkspaces, ...managedWorkspaces];
+    // Only allow ban operations for admin and superadmin roles
+    if (dto.banReason !== undefined || dto.isBanned !== undefined) {
+      if (
+        currentUserRole !== RoleEnum.ADMIN &&
+        currentUserRole !== RoleEnum.SUPER_ADMIN
+      ) {
+        throw new RpcException({
+          code: Status.PERMISSION_DENIED,
+          message: 'У вас нет прав для выполнения этой операции!',
+        });
+      }
+
+      updateData.banned = dto.isBanned ?? user.banned;
+      updateData.reason_banned = dto.banReason || user.reason_banned;
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: dto.id },
+      data: updateData,
+      include: {
+        role: true,
+      },
+    });
+
+    return {
+      ...updatedUser,
+      middleName: updatedUser.middleName || undefined,
+      role: updatedUser.role as unknown as Role,
+      banned: user.banned,
+      reasonBanned: user.reason_banned || '',
+    };
   }
 }

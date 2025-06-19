@@ -8,6 +8,7 @@ interface FindAllUsersRequest {
   isBanned?: boolean | null;
   hasTelegram?: boolean | null;
   roleId?: number;
+  currentRoleId: number;
   offset: number;
   limit: number;
 }
@@ -171,6 +172,7 @@ export const useAuthStore = defineStore("auth", () => {
         isBanned: request.isBanned,
         hasTelegram: request.hasTelegram,
         roleId: request.roleId || 0,
+        currentRoleId: request.currentRoleId,
         offset: request.offset,
         limit: request.limit,
       });
@@ -180,6 +182,10 @@ export const useAuthStore = defineStore("auth", () => {
       console.error("Error fetching users:", error);
       throw error;
     }
+  };
+
+  const resetUsers = () => {
+    users.value = [];
   };
 
   return {
@@ -198,5 +204,6 @@ export const useAuthStore = defineStore("auth", () => {
     fetchUser,
     logout,
     findAllUsers,
+    resetUsers,
   };
 });

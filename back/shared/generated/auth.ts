@@ -27,32 +27,26 @@ export interface SignUpRequest {
   workspaceId?: number | undefined;
 }
 
+export interface UpdateUserRequest {
+  userInfo: SignUpRequest | undefined;
+  banReason?: string | undefined;
+  id: number;
+  /** New field for ban status */
+  isBanned?: boolean | undefined;
+}
+
 export interface GetProfileRequest {
   id: number;
 }
 
 export interface FindAllUsersRequest {
-  nameFilter?:
-    | string
-    | undefined;
-  /** null - any, true - banned, false - not banned */
-  isBanned?:
-    | boolean
-    | undefined;
-  /** null - any, true - has telegram, false - no telegram */
-  hasTelegram?:
-    | boolean
-    | undefined;
-  /** null - any role, specific role_id for filtering */
-  roleId?:
-    | number
-    | undefined;
-  /** default 0 */
-  offset?:
-    | number
-    | undefined;
-  /** default 100 */
+  nameFilter?: string | undefined;
+  isBanned?: boolean | undefined;
+  hasTelegram?: boolean | undefined;
+  roleId?: number | undefined;
+  offset?: number | undefined;
   limit?: number | undefined;
+  currentRoleId: number;
 }
 
 export interface RefreshTokenRequest {
@@ -81,6 +75,8 @@ export interface User {
   middleName?: string | undefined;
   email: string;
   phone: string;
+  banned: boolean;
+  reasonBanned: string;
   role: Role | undefined;
 }
 
@@ -232,6 +228,76 @@ export const SignUpRequest: MessageFns<SignUpRequest> = {
   },
 };
 
+function createBaseUpdateUserRequest(): UpdateUserRequest {
+  return { userInfo: undefined, id: 0 };
+}
+
+export const UpdateUserRequest: MessageFns<UpdateUserRequest> = {
+  encode(message: UpdateUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userInfo !== undefined) {
+      SignUpRequest.encode(message.userInfo, writer.uint32(10).fork()).join();
+    }
+    if (message.banReason !== undefined) {
+      writer.uint32(18).string(message.banReason);
+    }
+    if (message.id !== 0) {
+      writer.uint32(24).uint32(message.id);
+    }
+    if (message.isBanned !== undefined) {
+      writer.uint32(32).bool(message.isBanned);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userInfo = SignUpRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.banReason = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.id = reader.uint32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.isBanned = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
 function createBaseGetProfileRequest(): GetProfileRequest {
   return { id: 0 };
 }
@@ -270,7 +336,7 @@ export const GetProfileRequest: MessageFns<GetProfileRequest> = {
 };
 
 function createBaseFindAllUsersRequest(): FindAllUsersRequest {
-  return {};
+  return { currentRoleId: 0 };
 }
 
 export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
@@ -292,6 +358,9 @@ export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
     }
     if (message.limit !== undefined) {
       writer.uint32(48).uint32(message.limit);
+    }
+    if (message.currentRoleId !== 0) {
+      writer.uint32(56).uint32(message.currentRoleId);
     }
     return writer;
   },
@@ -349,6 +418,14 @@ export const FindAllUsersRequest: MessageFns<FindAllUsersRequest> = {
           }
 
           message.limit = reader.uint32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.currentRoleId = reader.uint32();
           continue;
         }
       }
@@ -543,7 +620,7 @@ export const UserListResponse: MessageFns<UserListResponse> = {
 };
 
 function createBaseUser(): User {
-  return { id: 0, firstName: "", lastName: "", email: "", phone: "", role: undefined };
+  return { id: 0, firstName: "", lastName: "", email: "", phone: "", banned: false, reasonBanned: "", role: undefined };
 }
 
 export const User: MessageFns<User> = {
@@ -566,8 +643,14 @@ export const User: MessageFns<User> = {
     if (message.phone !== "") {
       writer.uint32(50).string(message.phone);
     }
+    if (message.banned !== false) {
+      writer.uint32(56).bool(message.banned);
+    }
+    if (message.reasonBanned !== "") {
+      writer.uint32(66).string(message.reasonBanned);
+    }
     if (message.role !== undefined) {
-      Role.encode(message.role, writer.uint32(58).fork()).join();
+      Role.encode(message.role, writer.uint32(74).fork()).join();
     }
     return writer;
   },
@@ -628,7 +711,23 @@ export const User: MessageFns<User> = {
           continue;
         }
         case 7: {
-          if (tag !== 58) {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.banned = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.reasonBanned = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -716,6 +815,8 @@ export interface AuthServiceClient {
   findAllUsers(request: FindAllUsersRequest, metadata: Metadata, ...rest: any): Observable<UserListResponse>;
 
   getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Observable<User>;
+
+  updateUserInfo(request: UpdateUserRequest, metadata: Metadata, ...rest: any): Observable<User>;
 }
 
 /** Сервис аутентификации и управления пользователями */
@@ -746,11 +847,13 @@ export interface AuthServiceController {
   ): Promise<UserListResponse> | Observable<UserListResponse> | UserListResponse;
 
   getProfile(request: GetProfileRequest, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
+
+  updateUserInfo(request: UpdateUserRequest, metadata: Metadata, ...rest: any): Promise<User> | Observable<User> | User;
 }
 
 export function AuthServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["signIn", "signUp", "refreshToken", "findAllUsers", "getProfile"];
+    const grpcMethods: string[] = ["signIn", "signUp", "refreshToken", "findAllUsers", "getProfile", "updateUserInfo"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
@@ -813,6 +916,15 @@ export const AuthServiceService = {
     responseSerialize: (value: User) => Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer) => User.decode(value),
   },
+  updateUserInfo: {
+    path: "/auth.AuthService/UpdateUserInfo",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateUserRequest) => Buffer.from(UpdateUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => UpdateUserRequest.decode(value),
+    responseSerialize: (value: User) => Buffer.from(User.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => User.decode(value),
+  },
 } as const;
 
 export interface AuthServiceServer extends UntypedServiceImplementation {
@@ -821,6 +933,7 @@ export interface AuthServiceServer extends UntypedServiceImplementation {
   refreshToken: handleUnaryCall<RefreshTokenRequest, AuthResponse>;
   findAllUsers: handleUnaryCall<FindAllUsersRequest, UserListResponse>;
   getProfile: handleUnaryCall<GetProfileRequest, User>;
+  updateUserInfo: handleUnaryCall<UpdateUserRequest, User>;
 }
 
 function longToNumber(int64: { toString(): string }): number {

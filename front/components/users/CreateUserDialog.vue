@@ -132,6 +132,7 @@ import { useToast } from "vue-toastification";
 import api from "@/services/api";
 import { useWorkspaceStore } from "@/stores/workspace";
 import CommonInputSelect from "@/components/common/CommonInputSelect.vue";
+import { fa, faker } from "@faker-js/faker";
 
 interface Props {
   modelValue: boolean;
@@ -151,14 +152,14 @@ const toast = useToast();
 const workspaceStore = useWorkspaceStore();
 
 const formData = ref({
-  email: "",
-  password: "",
+  email: faker.internet.email(),
+  password: "test",
   name: {
-    firstName: "",
-    lastName: "",
-    middleName: "",
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    middleName: faker.person.middleName(),
   },
-  phone: "",
+  phone: faker.phone.number(),
   roleId: 0,
   workspaceId: undefined as number | undefined,
 });
@@ -175,12 +176,9 @@ const isSuperAdmin = computed(
 );
 
 // Проверяем, выбрана ли роль менеджера или админа
-const isManagerOrAdminRole = computed(() => {
-  const selectedRole = authStore.getRolesComputed.find(
-    (r) => r.id === formData.value.roleId
-  );
-  return selectedRole?.value === "MANAGER" || selectedRole?.value === "ADMIN";
-});
+const isManagerOrAdminRole = computed(
+  () => formData.value.roleId === 2 || formData.value.roleId === 3
+);
 
 // Доступные роли для создания
 const availableRoles = computed(() => {

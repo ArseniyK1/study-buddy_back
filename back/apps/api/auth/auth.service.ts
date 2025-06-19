@@ -9,6 +9,7 @@ import {
   SignUpRequest,
   GetProfileRequest,
   User,
+  UpdateUserRequest,
 } from 'shared/generated/auth';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -73,6 +74,15 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     console.log('request', JSON.stringify(request));
     return from(
       handleRequest(() => this.authService.refreshToken(request, metadata)),
+    );
+  }
+
+  updateUserInfo(
+    request: UpdateUserRequest,
+    metadata: Metadata = new Metadata(),
+  ): Observable<User> {
+    return from(
+      handleRequest(() => this.authService.updateUserInfo(request, metadata)),
     );
   }
 }

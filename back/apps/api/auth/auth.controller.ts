@@ -1,15 +1,19 @@
-import { Body, Controller, Post, Request, Get } from '@nestjs/common';
+import { Body, Controller, Post, Request, Get, Put } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sing-in.dto';
 import {
   AuthResponse,
   FindAllUsersRequest,
   UserListResponse,
+  UpdateUserRequest,
 } from 'shared/generated/auth';
 import { Public } from './guard/public.decorator';
 import { SignUpDto } from './dto/sing-up.dto';
 import { Observable } from 'rxjs';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { Metadata } from '@grpc/grpc-js';
+import { User } from 'shared/generated/auth';
+import { IRequest } from '@shared/types/IRequest.interface';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -45,5 +49,25 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getProfile(@Request() req: any) {
     return this.authService.getProfile({ id: req.user.userId });
+  }
+
+  @Put('update-profile')
+  @ApiOperation({ summary: 'Update user profile' })
+  updateUserInfo(
+    @Body() dto: { id: number; is_banned?: boolean; ban_reason?: string },
+    @Request() req: IRequest,
+  ): Observable<User> {
+    const metadata = new Metadata();
+    metadata.set('role', req.user.role);
+
+    // Format the request for gRPC service
+    const request: UpdateUserRequest = {
+      id: dto.id,
+      isBanned: dto.is_banned,
+      banReason: dto.ban_reason,
+      userInfo: undefined, // We don't need to update user info in this case
+    };
+
+    return this.authService.updateUserInfo(request, metadata);
   }
 }

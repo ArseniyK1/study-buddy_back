@@ -48,18 +48,37 @@
 
       <!-- Existing bookings -->
       <div
-        v-for="booking in place.bookings"
+        v-for="booking in (place.bookings || []).filter(
+          (b) =>
+            parseTimeToHour(b.endTime) > hours[0] &&
+            parseTimeToHour(b.startTime) < hours[hours.length - 1]
+        )"
         :key="booking.id"
         class="absolute h-full bg-red-500/30"
         :style="{
-          left: `${(booking.start - hours[0]) * (100 / hours.length)}%`,
-          width: `${(booking.end - booking.start) * (100 / hours.length)}%`,
+          left: `${
+            ((Math.max(parseTimeToHour(booking.startTime), hours[0]) -
+              hours[0]) /
+              hours.length) *
+            100
+          }%`,
+          width: `${
+            ((Math.min(
+              parseTimeToHour(booking.endTime),
+              hours[hours.length - 1] + 1
+            ) -
+              Math.max(parseTimeToHour(booking.startTime), hours[0])) /
+              hours.length) *
+            100
+          }%`,
         }"
       >
         <div
           class="absolute inset-0 flex items-center justify-center text-xs text-red-200"
         >
-          {{ formatTime(booking.start) }}-{{ formatTime(booking.end) }}
+          {{ formatTime(parseTimeToHour(booking.startTime)) }}-{{
+            formatTime(parseTimeToHour(booking.endTime))
+          }}
         </div>
       </div>
 
@@ -132,8 +151,8 @@ interface Place {
 
 interface Booking {
   id: number;
-  start: number;
-  end: number;
+  startTime: string; // Изменено с start на startTime
+  endTime: string; // Изменено с end на endTime
 }
 
 interface CurrentBooking {
@@ -195,6 +214,16 @@ const roundTime = (time: number): number => {
   return Math.ceil(time);
 };
 
+const isSlotBooked = (start: number, end: number): boolean => {
+  return (
+    (props.place.bookings || []).some(
+      (booking) =>
+        start < parseTimeToHour(booking.endTime) &&
+        end > parseTimeToHour(booking.startTime)
+    ) ?? false
+  );
+};
+
 const handleTimelineClick = (event: MouseEvent) => {
   if (props.place.status !== "AVAILABLE") return;
 
@@ -208,21 +237,24 @@ const handleTimelineClick = (event: MouseEvent) => {
   const roundedTime = roundTime(clickedHour);
 
   if (!props.isSelecting) {
-    // Start selection
-    emit("select", props.place, roundedTime);
+    // Start selection только если не попадаем в занятый слот
+    if (!isSlotBooked(roundedTime, roundedTime + 0.5)) {
+      emit("select", props.place, roundedTime);
+    }
   } else if (props.selectionStart !== null) {
     // End selection
     const startTime = Math.min(props.selectionStart, roundedTime);
     const endTime = Math.max(props.selectionStart, roundedTime);
 
     // Validate against existing bookings
-    const hasOverlap = props.place.bookings?.some(
-      (booking) => startTime < booking.end && endTime > booking.start
-    );
-
-    if (!hasOverlap && endTime > startTime) {
+    if (!isSlotBooked(startTime, endTime) && endTime > startTime) {
       emit("selectEnd", props.place, startTime, endTime);
     }
   }
+};
+
+const parseTimeToHour = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.getUTCHours() + date.getUTCMinutes() / 60;
 };
 </script>

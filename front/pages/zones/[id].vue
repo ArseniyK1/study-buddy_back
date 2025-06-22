@@ -155,6 +155,41 @@ const calculatePrice = () => {
   return (hours * zone.value.pricePerHour).toFixed(2);
 };
 
+const parseTimeToHour = (isoString: string) => {
+  const date = new Date(isoString);
+  // Учитываем часовой пояс (Z означает UTC)
+  const localHours = date.getHours() + date.getMinutes() / 60;
+  // Если сервер возвращает время в UTC, а вам нужно местное время
+  // return localHours + (date.getTimezoneOffset() / 60);
+  return localHours;
+};
+
+const fetchBookingsForPlaces = async (date: string) => {
+  await Promise.all(
+    places.value.map(async (place) => {
+      try {
+        const { data: bookings } = await api.get(
+          `/workplace/${place.id}/bookings`,
+          {
+            params: { date },
+          }
+        );
+        // Преобразуем startTime/endTime в числовые значения часов
+        place.bookings = bookings.map((b: any) => ({
+          id: b.id,
+          start: parseTimeToHour(b.startTime),
+          end: parseTimeToHour(b.endTime),
+          startTime: b.startTime, // Сохраняем оригинальные значения
+          endTime: b.endTime, // если они понадобятся где-то еще
+        }));
+      } catch (error) {
+        place.bookings = [];
+        console.error(`Failed to fetch bookings for place ${place.id}:`, error);
+      }
+    })
+  );
+};
+
 const fetchZoneData = async () => {
   try {
     loading.value = true;
@@ -163,12 +198,17 @@ const fetchZoneData = async () => {
     );
     zone.value = zoneData;
     places.value = zoneData.places || [];
+    await fetchBookingsForPlaces(bookingDate.value);
   } catch (error) {
     console.error("Failed to fetch zone data:", error);
   } finally {
     loading.value = false;
   }
 };
+
+watch(bookingDate, async (newDate) => {
+  await fetchBookingsForPlaces(newDate);
+});
 
 onMounted(() => {
   fetchZoneData();

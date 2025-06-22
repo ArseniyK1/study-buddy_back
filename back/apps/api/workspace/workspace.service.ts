@@ -82,14 +82,12 @@ export class WorkspaceService {
       include: {
         owner: true,
         managers: true,
-        zones: true,
+        zones: { include: { places: true } },
       },
     });
 
     if (!workspace) {
-      throw new NotFoundException(
-        `Коворкинг пространство с ID ${id} не существует`,
-      );
+      return { ok: false };
     }
 
     return workspace;

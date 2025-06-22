@@ -55,12 +55,14 @@ export const useAuthStore = defineStore("auth", () => {
     { id: 3, value: "MANAGER", description: "Менеджер" },
     { id: 4, value: "SUPER_ADMIN", description: "Супер администратор" },
   ]);
+  const myWorkspace = ref({});
   const toast = useToast();
 
   const isAuthenticated = computed(() => !!accessToken.value);
   const getProfileComputed = computed(() => user.value);
   const getUsersComputed = computed(() => users.value);
   const getRolesComputed = computed(() => roles.value);
+  const getMyWorkspaceComputed = computed(() => myWorkspace.value);
 
   function setTokens(access: string | null, refresh: string | null) {
     accessToken.value = access;
@@ -110,7 +112,7 @@ export const useAuthStore = defineStore("auth", () => {
         email,
         password,
       });
-      console.log("Data:", data);
+
       setTokens(data.accessToken, data.refreshToken);
       await fetchUser();
       return data;
@@ -149,6 +151,8 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const { data } = await api.post("/auth/profile");
       setUser(data);
+
+      await getMyWorkspace();
       return data;
     } catch (error) {
       toast.error(
@@ -184,6 +188,14 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
+  const getMyWorkspace = async () => {
+    const res = await api.get("/auth/my-workspace");
+
+    myWorkspace.value = res.data;
+
+    return res;
+  };
+
   const resetUsers = () => {
     users.value = [];
   };
@@ -197,6 +209,7 @@ export const useAuthStore = defineStore("auth", () => {
     getProfileComputed,
     getUsersComputed,
     getRolesComputed,
+    getMyWorkspaceComputed,
     initialize,
     setTokens,
     signIn,

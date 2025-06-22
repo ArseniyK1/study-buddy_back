@@ -6,6 +6,8 @@ import { join } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TokenInterceptor } from './interceptors/token.interceptor';
+import { PrismaService } from '@prisma/prisma.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: TokenInterceptor,
     },
+    PrismaService,
+    WorkspaceService,
   ],
   exports: [AuthService],
 })

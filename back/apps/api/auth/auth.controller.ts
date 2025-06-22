@@ -70,4 +70,10 @@ export class AuthController {
 
     return this.authService.updateUserInfo(request, metadata);
   }
+
+  @Get('my-workspace')
+  @ApiOperation({ summary: 'Получение данных о своем коворкинге' })
+  async getMyWorkspace(@Request() req: IRequest) {
+    return this.authService.getMyWorkspace(req);
+  }
 }

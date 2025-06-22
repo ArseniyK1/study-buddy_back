@@ -151,7 +151,7 @@ const navigationItems = computed(() => {
   ];
 
   const managerItems = [
-    { name: "Управление местами", to: "/places", icon: BuildingOfficeIcon },
+    { name: "Управление", to: "/dashboard", icon: BuildingOfficeIcon },
     { name: "Бронирования", to: "/bookings", icon: CalendarIcon },
     { name: "Пользователи", to: "/users", icon: UserGroupIcon },
   ];

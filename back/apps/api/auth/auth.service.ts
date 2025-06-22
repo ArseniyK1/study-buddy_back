@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import {
   AuthResponse,
@@ -17,12 +22,17 @@ import { Metadata } from '@grpc/grpc-js';
 import { from, Observable } from 'rxjs';
 import { handleRequest } from '../common/grpc/grpc.handle';
 import { SignUpDto } from './dto/sing-up.dto';
+import { PrismaService } from '@prisma/prisma.service';
+import { IRequest } from '@shared/types/IRequest.interface';
+import { WorkspaceService } from '../workspace/workspace.service';
 
 @Injectable()
 export class AuthService implements OnModuleInit, AuthServiceClient {
   constructor(
     @Inject('GRPC_SERVICE') private client: ClientGrpc,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private prisma: PrismaService,
+    private workspaceService: WorkspaceService,
   ) {}
   private authService: AuthServiceClient;
 
@@ -84,5 +94,25 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
     return from(
       handleRequest(() => this.authService.updateUserInfo(request, metadata)),
     );
+  }
+
+  async getMyWorkspace(req: IRequest) {
+    const workspaceManagerInfo = await this.prisma.workspaceManager.findFirst({
+      where: {
+        managerId: req.user.userId,
+      },
+    });
+
+    if (!workspaceManagerInfo?.workspaceId) {
+      return { success: false, data: {} };
+    }
+
+    const workspace = await this.workspaceService.findOne(
+      workspaceManagerInfo.workspaceId,
+    );
+
+    if (workspace) {
+      return workspace;
+    }
   }
 }

@@ -50,7 +50,18 @@ export class WorkspaceZoneService {
         places: true,
       },
     });
-
+    // include: {
+    //   workspace: true,
+    //   places: {
+    //     include: {
+    //       bookings: {
+    //         include: {
+    //           user: true,
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
     if (!workspaceZone) {
       throw new NotFoundException(`Workspace zone with ID ${id} not found`);
     }

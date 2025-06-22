@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { IRequest } from '@shared/types/IRequest.interface';
 import { WorkplaceByIdDto } from './dto/workplace-by-id.dto';
+import { GetPlaceBookingsDto } from './dto/get-place-bookings.dto';
 
 @ApiTags('Рабочее место (Workplace)')
 @Controller('workplace')
@@ -91,11 +92,15 @@ export class WorkplaceController {
   }
 
   @Get(':id/bookings')
-  @ApiOperation({ summary: 'Получить все бронирования для рабочего места' })
+  @ApiOperation({
+    summary: 'Получить все бронирования для рабочего места за дату',
+  })
   @ApiParam({ name: 'id', description: 'ID рабочего места' })
+  @ApiQuery({ name: 'date', description: 'Дата (YYYY-MM-DD)', required: true })
   getPlaceBookings(
     @Param('id', ParseIntPipe) id: number,
+    @Query() query: GetPlaceBookingsDto,
   ): Promise<BookingResponseDto[] | any> {
-    return this.workplaceService.getPlaceBookings(id);
+    return this.workplaceService.getPlaceBookings(id, query.date);
   }
 }

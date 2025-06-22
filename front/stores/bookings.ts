@@ -98,7 +98,7 @@ export const useBookingsStore = defineStore("bookings", () => {
     loading.value = true;
     error.value = null;
     try {
-      await api.delete(`/booking/${bookingId}`);
+      await api.patch(`/booking/cancel/${bookingId}`);
       bookings.value = bookings.value.filter((b) => b.id !== bookingId);
     } catch (err) {
       error.value = "Failed to cancel booking";

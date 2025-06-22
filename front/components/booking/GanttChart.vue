@@ -53,6 +53,8 @@ interface Booking {
   id: number;
   start: number;
   end: number;
+  startTime?: string; // Опционально, если нужно
+  endTime?: string; // Опционально, если нужно
 }
 
 interface CurrentBooking {

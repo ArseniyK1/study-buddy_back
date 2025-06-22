@@ -75,7 +75,7 @@
         :bookings="bookingsStore.bookings"
         :loading="bookingsStore.loading"
         :error="bookingsStore.error"
-        @booking-cancelled="fetchBookings(true)"
+        @booking-cancelled="(v) => bookingCancel(v)"
       />
     </div>
   </div>
@@ -135,6 +135,10 @@ const handlePageChange = async (page: number) => {
     true
   );
   bookingsStore.currentPage = page;
+};
+
+const bookingCancel = async (id: number) => {
+  await bookingsStore.cancelBooking(id);
 };
 
 const handleFilterChange = () => {

@@ -1,7 +1,5 @@
-<!-- PlaceRow.vue -->
 <template>
   <div class="flex items-stretch h-16 mb-4">
-    <!-- Place info -->
     <div
       class="w-64 bg-gray-700 rounded-l-lg p-3 flex flex-col justify-center border-r border-gray-600"
       :class="{
@@ -11,7 +9,6 @@
       }"
     >
       <h3 class="font-medium text-gray-200">{{ place.name }}</h3>
-      <p class="text-xs text-gray-400 truncate">{{ place.description }}</p>
       <span
         class="mt-1 text-xs px-2 py-1 rounded-full self-start"
         :class="{
@@ -30,14 +27,10 @@
       </span>
     </div>
 
-    <!-- Timeline -->
     <div
       class="flex-grow relative bg-gray-700 rounded-r-lg"
       @click="handleTimelineClick"
-      @mousemove="handleMouseMove"
-      @mouseleave="handleMouseLeave"
     >
-      <!-- Hour markers -->
       <div class="absolute inset-0 flex">
         <div
           v-for="hour in hours"
@@ -48,166 +41,95 @@
 
       <!-- Existing bookings -->
       <div
-        v-for="booking in (place.bookings || []).filter(
-          (b) =>
-            parseTimeToHour(b.endTime) > hours[0] &&
-            parseTimeToHour(b.startTime) < hours[hours.length - 1]
-        )"
+        v-for="booking in place.bookings || []"
         :key="booking.id"
         class="absolute h-full bg-red-500/30"
-        :style="{
-          left: `${
-            ((Math.max(parseTimeToHour(booking.startTime), hours[0]) -
-              hours[0]) /
-              hours.length) *
-            100
-          }%`,
-          width: `${
-            ((Math.min(
-              parseTimeToHour(booking.endTime),
-              hours[hours.length - 1] + 1
-            ) -
-              Math.max(parseTimeToHour(booking.startTime), hours[0])) /
-              hours.length) *
-            100
-          }%`,
-        }"
-      >
-        <div
-          class="absolute inset-0 flex items-center justify-center text-xs text-red-200"
-        >
-          {{ formatTime(parseTimeToHour(booking.startTime)) }}-{{
-            formatTime(parseTimeToHour(booking.endTime))
-          }}
-        </div>
-      </div>
+        :style="getBookingStyle(booking)"
+      ></div>
 
-      <!-- Current booking preview -->
+      <!-- Current booking selection -->
       <div
-        v-if="
-          isCurrentPlace &&
-          currentBooking.startTime !== null &&
-          currentBooking.endTime !== null
-        "
+        v-if="isCurrentPlace && currentBooking.startTime"
         class="absolute h-full bg-indigo-500/30"
-        :style="{
-          left: `${
-            (currentBooking.startTime - hours[0]) * (100 / hours.length)
-          }%`,
-          width: `${
-            (currentBooking.endTime - currentBooking.startTime) *
-            (100 / hours.length)
-          }%`,
-        }"
-      >
-        <div
-          class="absolute inset-0 flex items-center justify-center text-xs text-indigo-200"
-        >
-          {{ formatTime(currentBooking.startTime) }}-{{
-            formatTime(currentBooking.endTime)
-          }}
-        </div>
-      </div>
-
-      <!-- Selection preview -->
-      <div
-        v-if="
-          isSelecting && place.status === 'AVAILABLE' && selectionStart !== null
-        "
-        class="absolute h-full bg-indigo-500/20"
-        :style="{
-          left: `${(selectionStart - hours[0]) * (100 / hours.length)}%`,
-          width: `${(currentHour - selectionStart) * (100 / hours.length)}%`,
-        }"
-      ></div>
-
-      <!-- Available slots -->
-      <div
-        v-if="place.status === 'AVAILABLE'"
-        class="absolute h-full w-full hover:bg-green-500/10 transition-colors"
-      ></div>
-
-      <!-- Mouse position indicator -->
-      <div
-        v-if="showMouseIndicator && place.status === 'AVAILABLE'"
-        class="absolute top-0 bottom-0 w-0.5 bg-indigo-400"
-        :style="{ left: `${mousePosition}%` }"
+        :style="getCurrentBookingStyle()"
       ></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import type { Place, Booking } from "@/types/booking";
+import { computed } from "vue";
 
-interface CurrentBooking {
-  placeId: number | null;
-  startTime: number | null;
-  endTime: number | null;
+interface Place {
+  id: number;
+  name: string;
+  description: string;
+  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+  zoneId: number;
+  bookings?: Booking[];
+}
+
+interface Booking {
+  id: number;
+  startTime: string;
+  endTime: string;
 }
 
 const props = defineProps<{
   place: Place;
   hours: number[];
-  isSelecting: boolean;
-  selectionStart: number | null;
-  currentBooking: CurrentBooking;
+  currentBooking: {
+    placeId: number | null;
+    startTime: { date: string; hour: number } | null;
+    endTime: { date: string; hour: number } | null;
+  };
 }>();
 
 const emit = defineEmits<{
-  (e: "select", place: Place, time: number): void;
-  (e: "selectEnd", place: Place, startTime: number, endTime: number): void;
+  (
+    e: "place-select",
+    place: Place,
+    start: { date: string; hour: number },
+    end: { date: string; hour: number }
+  ): void;
 }>();
-
-const mousePosition = ref(0);
-const showMouseIndicator = ref(false);
-const currentHour = ref(0);
 
 const isCurrentPlace = computed(() => {
   return props.currentBooking.placeId === props.place.id;
 });
 
-const formatTime = (time: number): string => {
-  const hours = Math.floor(time);
-  const minutes = time % 1 === 0.5 ? "30" : "00";
-  return `${hours.toString().padStart(2, "0")}:${minutes}`;
+const parseTimeToHour = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.getHours();
 };
 
-const handleMouseMove = (event: MouseEvent) => {
-  if (props.place.status !== "AVAILABLE") return;
+const getBookingStyle = (booking: Booking) => {
+  const startHour = parseTimeToHour(booking.startTime);
+  const endHour = parseTimeToHour(booking.endTime);
 
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const percentage = (x / rect.width) * 100;
-  mousePosition.value = percentage;
+  const left = (startHour / 23) * 100;
+  const width = ((endHour - startHour) / 23) * 100;
 
-  // Calculate hour based on mouse position
-  const hourIndex = Math.floor((percentage / 100) * props.hours.length);
-  currentHour.value = props.hours[hourIndex];
-  showMouseIndicator.value = true;
+  return {
+    left: `${left}%`,
+    width: `${width}%`,
+  };
 };
 
-const handleMouseLeave = () => {
-  showMouseIndicator.value = false;
-};
+const getCurrentBookingStyle = () => {
+  if (!props.currentBooking.startTime || !props.currentBooking.endTime)
+    return {};
 
-const roundTime = (time: number): number => {
-  // Round to nearest 30 minutes
-  const minutes = time % 1;
-  if (minutes < 0.25) return Math.floor(time);
-  if (minutes < 0.75) return Math.floor(time) + 0.5;
-  return Math.ceil(time);
-};
+  const left = (props.currentBooking.startTime.hour / 23) * 100;
+  const width =
+    ((props.currentBooking.endTime.hour - props.currentBooking.startTime.hour) /
+      23) *
+    100;
 
-const isSlotBooked = (start: number, end: number): boolean => {
-  return (
-    (props.place.bookings || []).some(
-      (booking) =>
-        start < parseTimeToHour(booking.endTime) &&
-        end > parseTimeToHour(booking.startTime)
-    ) ?? false
-  );
+  return {
+    left: `${left}%`,
+    width: `${width}%`,
+  };
 };
 
 const handleTimelineClick = (event: MouseEvent) => {
@@ -215,32 +137,26 @@ const handleTimelineClick = (event: MouseEvent) => {
 
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = event.clientX - rect.left;
-  const percentage = (x / rect.width) * 100;
+  const hour = Math.floor((x / rect.width) * 24);
 
-  // Calculate hour based on click position
-  const hourIndex = Math.floor((percentage / 100) * props.hours.length);
-  const clickedHour = props.hours[hourIndex];
-  const roundedTime = roundTime(clickedHour);
-
-  if (!props.isSelecting) {
-    // Start selection только если не попадаем в занятый слот
-    if (!isSlotBooked(roundedTime, roundedTime + 0.5)) {
-      emit("select", props.place, roundedTime);
-    }
-  } else if (props.selectionStart !== null) {
-    // End selection
-    const startTime = Math.min(props.selectionStart, roundedTime);
-    const endTime = Math.max(props.selectionStart, roundedTime);
-
-    // Validate against existing bookings
-    if (!isSlotBooked(startTime, endTime) && endTime > startTime) {
-      emit("selectEnd", props.place, startTime, endTime);
-    }
+  if (!isCurrentPlace.value) {
+    // First click - select place and set start time
+    emit(
+      "place-select",
+      props.place,
+      { date: formatDate(new Date()), hour },
+      { date: formatDate(new Date()), hour: hour + 1 }
+    );
+  } else {
+    // Subsequent clicks - update end time
+    emit("place-select", props.place, props.currentBooking.startTime!, {
+      date: props.currentBooking.startTime!.date,
+      hour,
+    });
   }
 };
 
-const parseTimeToHour = (isoString: string) => {
-  const date = new Date(isoString);
-  return date.getUTCHours() + date.getUTCMinutes() / 60;
+const formatDate = (date: Date) => {
+  return date.toISOString().split("T")[0];
 };
 </script>

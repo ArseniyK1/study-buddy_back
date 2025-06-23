@@ -27,10 +27,12 @@
       </span>
     </div>
 
+    <!-- Timeline -->
     <div
       class="flex-grow relative bg-gray-700 rounded-r-lg"
       @click="handleTimelineClick"
     >
+      <!-- Hour markers -->
       <div class="absolute inset-0 flex">
         <div
           v-for="hour in hours"
@@ -63,9 +65,7 @@ import { computed } from "vue";
 interface Place {
   id: number;
   name: string;
-  description: string;
   status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
-  zoneId: number;
   bookings?: Booking[];
 }
 
@@ -100,15 +100,16 @@ const isCurrentPlace = computed(() => {
 
 const parseTimeToHour = (isoString: string) => {
   const date = new Date(isoString);
-  return date.getHours();
+  return date.getHours() + date.getMinutes() / 60;
 };
 
 const getBookingStyle = (booking: Booking) => {
-  const startHour = parseTimeToHour(booking.startTime);
-  const endHour = parseTimeToHour(booking.endTime);
+  const start = parseTimeToHour(booking.startTime);
+  const end = parseTimeToHour(booking.endTime);
 
-  const left = (startHour / 23) * 100;
-  const width = ((endHour - startHour) / 23) * 100;
+  const hourWidth = 100 / 24; // Ширина одного часа в процентах
+  const left = (start % 24) * hourWidth;
+  const width = (end - start) * hourWidth;
 
   return {
     left: `${left}%`,
@@ -120,11 +121,11 @@ const getCurrentBookingStyle = () => {
   if (!props.currentBooking.startTime || !props.currentBooking.endTime)
     return {};
 
-  const left = (props.currentBooking.startTime.hour / 23) * 100;
+  const hourWidth = 100 / 24;
+  const left = props.currentBooking.startTime.hour * hourWidth;
   const width =
-    ((props.currentBooking.endTime.hour - props.currentBooking.startTime.hour) /
-      23) *
-    100;
+    (props.currentBooking.endTime.hour - props.currentBooking.startTime.hour) *
+    hourWidth;
 
   return {
     left: `${left}%`,
@@ -140,7 +141,6 @@ const handleTimelineClick = (event: MouseEvent) => {
   const hour = Math.floor((x / rect.width) * 24);
 
   if (!isCurrentPlace.value) {
-    // First click - select place and set start time
     emit(
       "place-select",
       props.place,
@@ -148,7 +148,6 @@ const handleTimelineClick = (event: MouseEvent) => {
       { date: formatDate(new Date()), hour: hour + 1 }
     );
   } else {
-    // Subsequent clicks - update end time
     emit("place-select", props.place, props.currentBooking.startTime!, {
       date: props.currentBooking.startTime!.date,
       hour,

@@ -39,23 +39,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import PlaceRow from "./PlaceRow.vue";
-
-interface Place {
-  id: number;
-  name: string;
-  description: string;
-  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
-  zoneId: number;
-  bookings?: Booking[];
-}
-
-interface Booking {
-  id: number;
-  start: number;
-  end: number;
-  startTime?: string; // Опционально, если нужно
-  endTime?: string; // Опционально, если нужно
-}
+import type { Place, Booking } from "@/types/booking";
 
 interface CurrentBooking {
   placeId: number | null;

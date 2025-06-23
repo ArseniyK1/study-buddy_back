@@ -139,21 +139,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-
-interface Place {
-  id: number;
-  name: string;
-  description: string;
-  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
-  zoneId: number;
-  bookings?: Booking[];
-}
-
-interface Booking {
-  id: number;
-  startTime: string; // Изменено с start на startTime
-  endTime: string; // Изменено с end на endTime
-}
+import type { Place, Booking } from "@/types/booking";
 
 interface CurrentBooking {
   placeId: number | null;

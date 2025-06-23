@@ -50,6 +50,7 @@ import GanttChart from "@/components/booking/GanttChart.vue";
 import BookingForm from "@/components/booking/BookingForm.vue";
 import { useBookingsStore } from "@/stores/bookings";
 import { useToast } from "vue-toastification";
+import type { Place, Booking } from "@/types/booking";
 
 interface Zone {
   id: number;
@@ -59,21 +60,6 @@ interface Zone {
   maxPlaces: number;
   workspaceId: number;
   places: Place[];
-}
-
-interface Place {
-  id: number;
-  name: string;
-  description: string;
-  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
-  zoneId: number;
-  bookings?: Booking[];
-}
-
-interface Booking {
-  id: number;
-  start: number;
-  end: number;
 }
 
 interface CurrentBooking {
@@ -188,13 +174,11 @@ const fetchBookingsForPlaces = async (date: string) => {
             params: { date },
           }
         );
-        // Преобразуем startTime/endTime в числовые значения часов
+        // Преобразуем только к нужному типу
         place.bookings = bookings.map((b: any) => ({
           id: b.id,
-          start: parseTimeToHour(b.startTime),
-          end: parseTimeToHour(b.endTime),
-          startTime: b.startTime, // Сохраняем оригинальные значения
-          endTime: b.endTime, // если они понадобятся где-то еще
+          startTime: b.startTime,
+          endTime: b.endTime,
         }));
       } catch (error) {
         place.bookings = [];

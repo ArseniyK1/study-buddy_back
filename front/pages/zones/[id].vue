@@ -48,6 +48,8 @@ import ZoneHeader from "@/components/booking/ZoneHeader.vue";
 import BookingDateSelector from "@/components/booking/BookingDateSelector.vue";
 import GanttChart from "@/components/booking/GanttChart.vue";
 import BookingForm from "@/components/booking/BookingForm.vue";
+import { useBookingsStore } from "@/stores/bookings";
+import { useToast } from "vue-toastification";
 
 interface Zone {
   id: number;
@@ -124,27 +126,39 @@ const handlePlaceSelect = (
   bookingEnd.value = endTime;
 };
 
+const bookingsStore = useBookingsStore();
+const toast = useToast();
+
 const bookPlace = async () => {
   if (!selectedPlace.value) return;
 
   try {
-    // Here will be the booking request
-    console.log("Booking place:", {
+    // Формируем ISO строки для времени бронирования
+    const date = bookingDate.value;
+    const startHour = Math.floor(bookingStart.value);
+    const startMinute = bookingStart.value % 1 === 0.5 ? 30 : 0;
+    const endHour = Math.floor(bookingEnd.value);
+    const endMinute = bookingEnd.value % 1 === 0.5 ? 30 : 0;
+    const startTime = new Date(date);
+    startTime.setHours(startHour, startMinute, 0, 0);
+    const endTime = new Date(date);
+    endTime.setHours(endHour, endMinute, 0, 0);
+
+    const toUTCISOString = (d: Date) =>
+      new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+
+    await bookingsStore.createBooking({
+      startTime: toUTCISOString(startTime),
+      endTime: toUTCISOString(endTime),
       placeId: selectedPlace.value.id,
-      date: bookingDate.value,
-      start: bookingStart.value,
-      end: bookingEnd.value,
-      price: calculatePrice(),
     });
 
-    // Temporary stub - manually update place status
-    selectedPlace.value.status = "OCCUPIED";
-    places.value = places.value.map((p) =>
-      p.id === selectedPlace.value?.id ? { ...p, status: "OCCUPIED" } : p
-    );
-
+    // После успешного бронирования обновляем бронирования для всех мест
+    await fetchBookingsForPlaces(bookingDate.value);
+    toast.success("Место успешно забронировано!");
     selectedPlace.value = null;
-  } catch (error) {
+  } catch (error: any) {
+    toast.error(error?.response?.data?.message || "Ошибка при бронировании");
     console.error("Booking failed:", error);
   }
 };

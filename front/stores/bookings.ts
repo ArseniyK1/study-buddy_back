@@ -77,7 +77,10 @@ export const useBookingsStore = defineStore("bookings", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { data } = await api.post<Booking>("/booking", bookingData);
+      const { data } = await api.post<Booking>(
+        "/workplace/booking",
+        bookingData
+      );
       if (!!data?.id) {
         bookings.value.push(data);
         return data;

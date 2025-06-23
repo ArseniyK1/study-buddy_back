@@ -8,17 +8,17 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "generate-proto": "ts-node scripts/generate-proto.ts"
+    "generate-proto": "ts-node scripts/generate-proto.ts",
+    "prod": "cross-env NUXT_PUBLIC_API_BASE=http://212.67.9.203/api nuxt preview"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxtjs/tailwindcss": "^6.11.3",
-    "@types/lodash": "^4.17.17",
     "nuxt": "^3.10.3",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "cross-env": "^7.0.3"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.8.0",
     "@grpc/grpc-js": "^1.9.14",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",

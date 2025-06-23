@@ -25,21 +25,23 @@ async function main() {
   const totalStartTime = Date.now();
 
   console.log('Создание ролей...');
-  // await measureTime('Создание ролей', createRoles);
+  await measureTime('Создание ролей', createRoles);
   console.log('Роли созданы успешно');
 
   console.log('Создание пользователей...');
-  // const users = await measureTime('Создание пользователей', () => createUsers(100000));
-  const users = await prisma.user.findMany();
+  const users = await measureTime('Создание пользователей', () =>
+    createUsers(100000),
+  );
+  // const users = await prisma.user.findMany();
   console.log('Пользователи созданы успешно');
 
   const ownerIds = users
-    .map((user) => {
+    .map((user: any) => {
       if (user.roleId === 2) {
         return user.id;
       }
     })
-    .filter((id): id is number => id !== undefined);
+    .filter((id: any): id is number => id !== undefined);
 
   console.log('Создание коворкингов...');
   await measureTime('Создание коворкингов', () =>

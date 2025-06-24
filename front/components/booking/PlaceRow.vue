@@ -33,48 +33,47 @@
       class="flex-grow relative bg-gray-700 rounded-r-lg"
       @click="handleTimelineClick"
     >
+      <!-- Hour markers with borders -->
       <div class="absolute inset-0 flex">
         <div
-          v-for="day in days"
-          :key="day.date"
+          v-for="hour in hours"
+          :key="hour"
           class="flex-1 border-r border-gray-600"
-        >
-          <div
-            v-for="hour in hours"
-            :key="hour"
-            class="h-full border-r border-gray-600"
-          ></div>
-        </div>
+        ></div>
       </div>
 
       <!-- Existing bookings -->
       <div
         v-for="booking in filteredBookings"
         :key="booking.id"
-        class="absolute h-full bg-red-500/30"
+        class="absolute h-full bg-red-500/40 rounded-sm"
         :style="getBookingStyle(booking)"
-      ></div>
+      >
+        <div class="absolute inset-0 border-l-2 border-red-600"></div>
+        <div class="absolute inset-0 border-r-2 border-red-600"></div>
+      </div>
 
       <!-- Current booking selection -->
       <div
         v-if="isCurrentPlace && currentBooking.startTime"
-        class="absolute h-full bg-indigo-500/30"
+        class="absolute h-full bg-indigo-500/40 rounded-sm"
         :style="getCurrentBookingStyle()"
-      ></div>
+      >
+        <div class="absolute inset-0 border-l-2 border-indigo-400"></div>
+        <div class="absolute inset-0 border-r-2 border-indigo-400"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { parseISO, format, isWithinInterval } from "date-fns";
+import { parseISO, isWithinInterval, addMinutes } from "date-fns";
 
 interface Place {
   id: number;
   name: string;
-  description: string;
   status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
-  zoneId: number;
   bookings?: Booking[];
 }
 
@@ -116,17 +115,20 @@ const isCurrentPlace = computed(() => {
 const filteredBookings = computed(() => {
   if (!props.place.bookings) return [];
 
-  const startDate = props.days[0].date;
-  const endDate = props.days[props.days.length - 1].date;
+  const rangeStart = parseISO(props.days[0].date);
+  const rangeEnd = addMinutes(
+    parseISO(props.days[props.days.length - 1].date),
+    1439
+  ); // 23:59
 
   return props.place.bookings.filter((booking) => {
-    const bookingStart = booking.startTime.split("T")[0];
-    const bookingEnd = booking.endTime.split("T")[0];
+    const bookingStart = parseISO(booking.startTime);
+    const bookingEnd = parseISO(booking.endTime);
 
     return (
-      (bookingStart >= startDate && bookingStart <= endDate) ||
-      (bookingEnd >= startDate && bookingEnd <= endDate) ||
-      (bookingStart <= startDate && bookingEnd >= endDate)
+      isWithinInterval(bookingStart, { start: rangeStart, end: rangeEnd }) ||
+      isWithinInterval(bookingEnd, { start: rangeStart, end: rangeEnd }) ||
+      (bookingStart < rangeStart && bookingEnd > rangeEnd)
     );
   });
 });
@@ -134,28 +136,24 @@ const filteredBookings = computed(() => {
 const getBookingStyle = (booking: Booking) => {
   const start = parseISO(booking.startTime);
   const end = parseISO(booking.endTime);
-
   const rangeStart = parseISO(props.days[0].date);
-  const rangeEnd = parseISO(props.days[props.days.length - 1].date);
-  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeEnd = addMinutes(
+    parseISO(props.days[props.days.length - 1].date),
+    1439
+  );
 
-  // Adjust booking to visible range
+  // Adjust to visible range
   const visibleStart = start < rangeStart ? rangeStart : start;
   const visibleEnd = end > rangeEnd ? rangeEnd : end;
 
-  // Calculate position
-  const totalDays = props.days.length;
-  const totalHours = totalDays * 24;
-
-  const startOffset = (visibleStart - rangeStart) / (1000 * 60 * 60);
-  const endOffset = (visibleEnd - rangeStart) / (1000 * 60 * 60);
-
-  const left = (startOffset / totalHours) * 100;
-  const width = ((endOffset - startOffset) / totalHours) * 100;
+  // Calculate total visible time range in milliseconds
+  const totalRange = rangeEnd - rangeStart;
+  const startOffset = visibleStart - rangeStart;
+  const duration = visibleEnd - visibleStart;
 
   return {
-    left: `${left}%`,
-    width: `${width}%`,
+    left: `${(startOffset / totalRange) * 100}%`,
+    width: `${(duration / totalRange) * 100}%`,
   };
 };
 
@@ -163,31 +161,29 @@ const getCurrentBookingStyle = () => {
   if (!props.currentBooking.startTime || !props.currentBooking.endTime)
     return {};
 
-  const startDate = props.currentBooking.startTime.date;
-  const startHour = props.currentBooking.startTime.hour;
-  const endDate = props.currentBooking.endTime.date;
-  const endHour = props.currentBooking.endTime.hour;
-
+  const start = new Date(
+    `${props.currentBooking.startTime.date}T${String(
+      props.currentBooking.startTime.hour
+    ).padStart(2, "0")}:00:00`
+  );
+  const end = new Date(
+    `${props.currentBooking.endTime.date}T${String(
+      props.currentBooking.endTime.hour
+    ).padStart(2, "0")}:00:00`
+  );
   const rangeStart = parseISO(props.days[0].date);
-  const rangeEnd = parseISO(props.days[props.days.length - 1].date);
-  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeEnd = addMinutes(
+    parseISO(props.days[props.days.length - 1].date),
+    1439
+  );
 
-  // Calculate position
-  const totalDays = props.days.length;
-  const totalHours = totalDays * 24;
-
-  const startTime = new Date(`${startDate}T${startHour}:00:00`);
-  const endTime = new Date(`${endDate}T${endHour}:00:00`);
-
-  const startOffset = (startTime - rangeStart) / (1000 * 60 * 60);
-  const endOffset = (endTime - rangeStart) / (1000 * 60 * 60);
-
-  const left = (startOffset / totalHours) * 100;
-  const width = ((endOffset - startOffset) / totalHours) * 100;
+  const totalRange = rangeEnd - rangeStart;
+  const startOffset = start - rangeStart;
+  const duration = end - start;
 
   return {
-    left: `${left}%`,
-    width: `${width}%`,
+    left: `${(startOffset / totalRange) * 100}%`,
+    width: `${(duration / totalRange) * 100}%`,
   };
 };
 
@@ -199,9 +195,15 @@ const handleTimelineClick = (event: MouseEvent) => {
   const totalWidth = rect.width;
 
   // Calculate day and hour
-  const dayIndex = Math.floor((x / totalWidth) * props.days.length);
+  const dayIndex = Math.min(
+    Math.floor((x / totalWidth) * props.days.length),
+    props.days.length - 1
+  );
   const dayWidth = totalWidth / props.days.length;
-  const hour = Math.floor(((x - dayIndex * dayWidth) / dayWidth) * 24);
+  const hour = Math.min(
+    Math.floor(((x - dayIndex * dayWidth) / dayWidth) * 24),
+    23
+  );
 
   const selectedDate = props.days[dayIndex].date;
 
@@ -216,22 +218,15 @@ const handleTimelineClick = (event: MouseEvent) => {
   } else {
     // Subsequent clicks - update end time
     const startDate = props.currentBooking.startTime!.date;
-    const startHour = props.currentBooking.startTime!.hour;
+    const newEndHour =
+      hour > props.currentBooking.startTime!.hour
+        ? hour
+        : props.currentBooking.startTime!.hour + 1;
 
-    // Determine if we're selecting same day or different day
-    if (selectedDate === startDate) {
-      const newEndHour = hour > startHour ? hour : startHour + 1;
-      emit("place-select", props.place, props.currentBooking.startTime!, {
-        date: startDate,
-        hour: newEndHour,
-      });
-    } else {
-      // Different day - set end time to selected hour
-      emit("place-select", props.place, props.currentBooking.startTime!, {
-        date: selectedDate,
-        hour: hour,
-      });
-    }
+    emit("place-select", props.place, props.currentBooking.startTime!, {
+      date: selectedDate,
+      hour: newEndHour,
+    });
   }
 };
 </script>

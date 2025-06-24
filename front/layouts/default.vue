@@ -159,7 +159,7 @@ const navigationItems = computed(() => {
   const adminItems = [
     { name: "Пользователи", to: "/users", icon: UserGroupIcon },
     { name: "Настройки", to: "/admin", icon: CogIcon },
-    { name: "Статистика", to: "/statistics", icon: ChartBarIcon },
+    // { name: "Статистика", to: "/statistics", icon: ChartBarIcon },
   ];
 
   switch (role) {

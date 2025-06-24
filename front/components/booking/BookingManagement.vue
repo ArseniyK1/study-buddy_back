@@ -48,9 +48,9 @@
       <table class="min-w-full bg-gray-800 rounded">
         <thead>
           <tr class="text-gray-400">
-            <th class="px-4 py-2 text-white">ID</th>
-            <th class="px-4 py-2 text-white">Место</th>
-            <th class="px-4 py-2 text-white">Зона</th>
+            <th class="px-4 py-2 text-white">ID брони</th>
+            <th class="px-4 py-2 text-white">ID пользователя</th>
+            <th class="px-4 py-2 text-white">ФИО</th>
             <th class="px-4 py-2 text-white">Период</th>
             <th class="px-4 py-2 text-white">Статус</th>
             <th class="px-4 py-2 text-white">Цена</th>
@@ -64,9 +64,13 @@
             class="border-b border-gray-700"
           >
             <td class="px-4 py-2 text-white">{{ booking.id }}</td>
-            <td class="px-4 py-2 text-white">{{ booking.place?.name }}</td>
+            <td class="px-4 py-2 text-white">{{ booking.user.id }}</td>
             <td class="px-4 py-2 text-white">
-              {{ booking.place?.zone?.name }}
+              {{
+                `${booking.user.lastName} ${booking.user.firstName} ${
+                  booking.user.middleName || ""
+                }`
+              }}
             </td>
             <td class="px-4 py-2 text-white">
               {{ formatPeriod(booking.startTime, booking.endTime) }}
@@ -97,10 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useBookingsStore } from "@/stores/bookings";
 import { useSearchStore } from "@/stores/search";
-import { format } from "date-fns";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   placeIds: {
@@ -114,14 +118,14 @@ const searchStore = useSearchStore();
 const selectedStatus = ref("");
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
+const { bookings, loading, error } = storeToRefs(bookingsStore);
+
 const fetchBookings = async (reset = false) => {
   await bookingsStore.fetchWorkplaceBookings(
-    1, // Пример ID рабочего места
     {
       status: selectedStatus.value || undefined,
       date: selectedDate.value,
       placeIds: props.placeIds,
-      query: searchStore.getSearchQuery() || undefined,
       offset: reset
         ? 0
         : (bookingsStore.currentPage - 1) * bookingsStore.pageSize,

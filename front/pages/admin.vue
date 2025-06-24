@@ -89,7 +89,7 @@
             <th class="px-4 py-2 text-white">ID</th>
             <th class="px-4 py-2 text-white">Название</th>
             <th class="px-4 py-2 text-white">Описание</th>
-            <th class="px-4 py-2 text-white">Статус</th>
+            <!-- <th class="px-4 py-2 text-white">Статус</th> -->
             <th class="px-4 py-2 text-white">Зона</th>
             <th class="px-4 py-2 text-white">Действия</th>
           </tr>
@@ -103,7 +103,7 @@
             <td class="px-4 py-2 text-white">{{ place.id }}</td>
             <td class="px-4 py-2 text-white">{{ place.name }}</td>
             <td class="px-4 py-2 text-white">{{ place.description }}</td>
-            <td class="px-4 py-2 text-white">{{ place.status }}</td>
+            <!-- <td class="px-4 py-2 text-white">{{ place.status }}</td> -->
             <td class="px-4 py-2 text-white">
               {{ getZoneName(place.zoneId) }}
             </td>

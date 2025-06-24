@@ -179,7 +179,7 @@ export class WorkplaceService {
     });
   }
 
-  async getPlaceBookings(
+  async getPlaceBookings_old(
     placeId: number | null,
     date?: string,
     placeIds?: number[],
@@ -218,6 +218,36 @@ export class WorkplaceService {
     });
 
     console.log('Found bookings:', bookings);
+
+    return bookings;
+  }
+
+  async getPlaceBookings(placeIds: number[] = [], date?: string) {
+    let where: any = {};
+
+    if (placeIds && placeIds.length > 0) {
+      where.placeId = { in: placeIds };
+    }
+
+    if (date) {
+      const startOfDay = new Date(date + 'T00:00:00.000Z');
+      const endOfDay = new Date(date + 'T23:59:59.999Z');
+      where = {
+        ...where,
+        OR: [
+          { startTime: { gte: startOfDay, lte: endOfDay } },
+          { endTime: { gte: startOfDay, lte: endOfDay } },
+          { startTime: { lte: startOfDay }, endTime: { gte: endOfDay } },
+        ],
+      };
+    }
+
+    const bookings = await this.prisma.booking.findMany({
+      where,
+      include: {
+        user: true,
+      },
+    });
 
     return bookings;
   }

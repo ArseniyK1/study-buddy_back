@@ -4,11 +4,12 @@ import {
   Post,
   Body,
   Patch,
-  Param,
   Delete,
-  ParseIntPipe,
-  Request,
   Query,
+  Request,
+  Param,
+  ParseIntPipe,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { WorkplaceService } from './workplace.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -102,14 +103,26 @@ export class WorkplaceController {
     description: 'Список ID рабочих мест',
     required: false,
   })
-  async getPlaceBookings(
+  async getPlaceBookings_old(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: GetPlaceBookingsDto,
   ): Promise<BookingResponseDto[] | any> {
-    return this.workplaceService.getPlaceBookings(
+    return this.workplaceService.getPlaceBookings_old(
       id,
       query.date,
       query.placeIds,
     );
+  }
+
+  // workplace.controller.ts
+  @Post('bookings')
+  @ApiOperation({
+    summary: 'Получить все бронирования для рабочих мест за дату',
+  })
+  @ApiBody({ type: GetPlaceBookingsDto })
+  async getPlaceBookings(
+    @Body() dto: GetPlaceBookingsDto,
+  ): Promise<BookingResponseDto[] | any> {
+    return this.workplaceService.getPlaceBookings(dto.placeIds, dto.date);
   }
 }

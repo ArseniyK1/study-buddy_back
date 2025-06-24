@@ -171,7 +171,7 @@ export class WorkplaceService {
       data: {
         startTime: dto.startTime,
         endTime: dto.endTime,
-        status: bookingStatus.ACTIVE,
+        status: bookingStatus.PENDING,
         totalPrice,
         userId,
         placeId: dto.placeId,

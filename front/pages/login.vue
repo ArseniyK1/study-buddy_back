@@ -84,7 +84,7 @@ definePageMeta({
 
 const router = useRouter();
 const authStore = useAuthStore();
-const email = ref("Lane.Price@yahoo.com");
+const email = ref("admin@admin.com");
 const password = ref("test");
 const loading = ref(false);
 const error = ref("");

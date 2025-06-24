@@ -245,6 +245,7 @@ import { useWorkspaceStore } from "../stores/workspace";
 import WorkspaceCard from "../components/WorkspaceCard.vue";
 import InfiniteList from "../components/common/InfiniteList.vue";
 import { useNotify } from "../services/notify";
+import { fakerRU as faker } from "@faker-js/faker";
 
 interface Workspace {
   id: number;
@@ -285,11 +286,11 @@ const isSuperAdmin = computed(() => {
 
 const showCreateDialog = ref(false);
 const newWorkspace = ref<NewWorkspace>({
-  name: "NAME" + Math.random(),
-  address: "ADDRESS" + Math.random(),
-  description: "DESCRIPTION" + Math.random(),
-  capacity: 1,
-  amenities: "AMENITIES" + Math.random(),
+  name: faker.company.name(),
+  address: faker.location.streetAddress(),
+  description: faker.lorem.paragraph(),
+  capacity: faker.number.int({ min: 10, max: 100 }),
+  amenities: faker.lorem.words(5),
 });
 
 const deletingWorkspaceIds = ref<Set<number>>(new Set());

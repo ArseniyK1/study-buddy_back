@@ -30,7 +30,7 @@ async function main() {
 
   console.log('Создание пользователей...');
   const users = await measureTime('Создание пользователей', () =>
-    createUsers(50),
+    createUsers(6),
   );
   // const users = await prisma.user.findMany();
   console.log('Пользователи созданы успешно');
@@ -54,7 +54,7 @@ async function main() {
 
   console.log('Создание зон коворкингов...');
   await measureTime('Создание зон коворкингов', () =>
-    createWorkspaceZones(100, workspaceIds),
+    createWorkspaceZones(20, workspaceIds),
   );
   console.log('Зоны коворкингов созданы успешно');
 
@@ -62,7 +62,7 @@ async function main() {
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
   console.log('Создание рабочих мест...');
-  await measureTime('Создание рабочих мест', () => createPlaces(1000, zoneIds));
+  await measureTime('Создание рабочих мест', () => createPlaces(400, zoneIds));
   console.log('Рабочие места созданы успешно');
 
   const places = await prisma.place.findMany();
@@ -78,7 +78,7 @@ async function main() {
 
   console.log('Создание бронирований...');
   await measureTime('Создание бронирований', () =>
-    createBookings(2000, clientIds, placeIds),
+    createBookings(10, clientIds, placeIds),
   );
   console.log('Бронирования созданы успешно');
 

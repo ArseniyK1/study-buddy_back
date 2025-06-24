@@ -2,7 +2,7 @@
   <div class="flex items-stretch h-16 mb-4">
     <!-- Place info column -->
     <div
-      class="w-64 bg-gray-700 rounded-l-lg p-3 flex flex-col justify-center border-r border-gray-600"
+      class="w-64 bg-gray-700 rounded-l-lg p-3 flex flex-col justify-center border-r border-gray-600 relative"
       :class="{
         'bg-green-900/20': place.status === 'AVAILABLE',
         'bg-red-900/20': place.status === 'OCCUPIED',
@@ -26,6 +26,28 @@
             : "Обслуживание"
         }}
       </span>
+
+      <!-- Clear button -->
+      <button
+        v-if="isCurrentPlace && currentBooking.startTime"
+        @click="clearSelection"
+        class="absolute top-1 right-1 text-gray-400 hover:text-white"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
 
     <!-- Timeline -->
@@ -68,7 +90,14 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { parseISO, isWithinInterval, addMinutes } from "date-fns";
+import {
+  parseISO,
+  isWithinInterval,
+  addMinutes,
+  isBefore,
+  isAfter,
+} from "date-fns";
+import { useToast } from "vue-toastification";
 
 interface Place {
   id: number;
@@ -106,7 +135,10 @@ const emit = defineEmits<{
     start: { date: string; hour: number },
     end: { date: string; hour: number }
   ): void;
+  (e: "clear-selection"): void;
 }>();
+
+const toast = useToast();
 
 const isCurrentPlace = computed(() => {
   return props.currentBooking.placeId === props.place.id;
@@ -115,15 +147,17 @@ const isCurrentPlace = computed(() => {
 const filteredBookings = computed(() => {
   if (!props.place.bookings) return [];
 
-  const rangeStart = parseISO(props.days[0].date);
+  const rangeStart = new Date(props.days[0].date);
   const rangeEnd = addMinutes(
-    parseISO(props.days[props.days.length - 1].date),
+    new Date(props.days[props.days.length - 1].date),
     1439
   ); // 23:59
 
   return props.place.bookings.filter((booking) => {
-    const bookingStart = parseISO(booking.startTime);
-    const bookingEnd = parseISO(booking.endTime);
+    if (booking.status !== "ACTIVE") return false;
+
+    const bookingStart = new Date(booking.startTime);
+    const bookingEnd = new Date(booking.endTime);
 
     return (
       isWithinInterval(bookingStart, { start: rangeStart, end: rangeEnd }) ||
@@ -134,22 +168,24 @@ const filteredBookings = computed(() => {
 });
 
 const getBookingStyle = (booking: Booking) => {
-  const start = parseISO(booking.startTime);
-  const end = parseISO(booking.endTime);
-  const rangeStart = parseISO(props.days[0].date);
+  // Используем UTC время без преобразования
+  const start = new Date(booking.startTime);
+  const end = new Date(booking.endTime);
+
+  const rangeStart = new Date(props.days[0].date);
   const rangeEnd = addMinutes(
-    parseISO(props.days[props.days.length - 1].date),
+    new Date(props.days[props.days.length - 1].date),
     1439
-  );
+  ); // 23:59
 
   // Adjust to visible range
   const visibleStart = start < rangeStart ? rangeStart : start;
   const visibleEnd = end > rangeEnd ? rangeEnd : end;
 
   // Calculate total visible time range in milliseconds
-  const totalRange = rangeEnd - rangeStart;
-  const startOffset = visibleStart - rangeStart;
-  const duration = visibleEnd - visibleStart;
+  const totalRange = rangeEnd.getTime() - rangeStart.getTime();
+  const startOffset = visibleStart.getTime() - rangeStart.getTime();
+  const duration = visibleEnd.getTime() - visibleStart.getTime();
 
   return {
     left: `${(startOffset / totalRange) * 100}%`,
@@ -161,30 +197,49 @@ const getCurrentBookingStyle = () => {
   if (!props.currentBooking.startTime || !props.currentBooking.endTime)
     return {};
 
+  // Создаем даты в UTC
   const start = new Date(
     `${props.currentBooking.startTime.date}T${String(
       props.currentBooking.startTime.hour
-    ).padStart(2, "0")}:00:00`
+    ).padStart(2, "0")}:00:00Z` // Добавляем Z для указания UTC
   );
   const end = new Date(
     `${props.currentBooking.endTime.date}T${String(
       props.currentBooking.endTime.hour
-    ).padStart(2, "0")}:00:00`
+    ).padStart(2, "0")}:00:00Z` // Добавляем Z для указания UTC
   );
-  const rangeStart = parseISO(props.days[0].date);
+
+  const rangeStart = new Date(props.days[0].date);
   const rangeEnd = addMinutes(
-    parseISO(props.days[props.days.length - 1].date),
+    new Date(props.days[props.days.length - 1].date),
     1439
   );
 
-  const totalRange = rangeEnd - rangeStart;
-  const startOffset = start - rangeStart;
-  const duration = end - start;
+  const totalRange = rangeEnd.getTime() - rangeStart.getTime();
+  const startOffset = start.getTime() - rangeStart.getTime();
+  const duration = end.getTime() - start.getTime();
 
   return {
     left: `${(startOffset / totalRange) * 100}%`,
     width: `${(duration / totalRange) * 100}%`,
   };
+};
+
+const checkTimeConflict = (start: Date, end: Date) => {
+  if (!props.place.bookings) return false;
+
+  return props.place.bookings.some((booking) => {
+    if (booking.status !== "ACTIVE") return false;
+
+    const bookingStart = new Date(booking.startTime);
+    const bookingEnd = new Date(booking.endTime);
+
+    return (
+      (isAfter(start, bookingStart) && isBefore(start, bookingEnd)) ||
+      (isAfter(end, bookingStart) && isBefore(end, bookingEnd)) ||
+      (isBefore(start, bookingStart) && isAfter(end, bookingEnd))
+    );
+  });
 };
 
 const handleTimelineClick = (event: MouseEvent) => {
@@ -218,15 +273,48 @@ const handleTimelineClick = (event: MouseEvent) => {
   } else {
     // Subsequent clicks - update end time
     const startDate = props.currentBooking.startTime!.date;
-    const newEndHour =
-      hour > props.currentBooking.startTime!.hour
-        ? hour
-        : props.currentBooking.startTime!.hour + 1;
+    const startHour = props.currentBooking.startTime!.hour;
+
+    let newEndHour = hour;
+
+    // Ensure end time is after start time
+    if (selectedDate === startDate && hour <= startHour) {
+      newEndHour = startHour + 1;
+    } else if (new Date(selectedDate) < new Date(startDate)) {
+      // If selected date is before start date, swap them
+      emit(
+        "place-select",
+        props.place,
+        { date: selectedDate, hour },
+        { date: startDate, hour: startHour }
+      );
+      return;
+    }
+
+    // Создаем даты в UTC
+    const startTime = new Date(
+      `${startDate}T${String(startHour).padStart(2, "0")}:00:00Z`
+    );
+    const endTime = new Date(
+      `${selectedDate}T${String(newEndHour).padStart(2, "0")}:00:00Z`
+    );
+
+    // Check for conflicts with existing bookings
+    if (checkTimeConflict(startTime, endTime)) {
+      toast.error(
+        "Выбранный интервал пересекается с уже забронированным временем"
+      );
+      return;
+    }
 
     emit("place-select", props.place, props.currentBooking.startTime!, {
       date: selectedDate,
       hour: newEndHour,
     });
   }
+};
+
+const clearSelection = () => {
+  emit("clear-selection");
 };
 </script>

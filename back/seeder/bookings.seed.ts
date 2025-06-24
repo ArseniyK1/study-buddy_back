@@ -1,5 +1,5 @@
 import { PrismaClient, Booking } from '@prisma/client';
-import { faker } from '@faker-js/faker';
+import { fakerRU as faker } from '@faker-js/faker';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,9 +14,20 @@ export const createBookings = async (
   const statuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
 
   for (let i = 0; i < quantity; i++) {
-    const startTime = faker.date.future();
+    // Генерируем случайный день в будущем (до 1 года)
+    const baseDate = faker.date.soon({ days: 365 });
+    // Час от 1 до 13
+    const hour = faker.number.int({ min: 1, max: 13 });
+    // Минуты: 0 или 30
+    const minute = faker.helpers.arrayElement([0, 30]);
+    // Стартовое время
+    const startTime = new Date(baseDate);
+    startTime.setHours(hour, minute, 0, 0);
+    // Длительность бронирования (1-8 часов)
+    const durationHours = faker.number.int({ min: 1, max: 8 });
+    // Конец бронирования: те же минуты, +N часов
     const endTime = new Date(startTime);
-    endTime.setHours(endTime.getHours() + faker.number.int({ min: 1, max: 8 }));
+    endTime.setHours(startTime.getHours() + durationHours);
 
     const booking = await prisma.booking.create({
       data: {

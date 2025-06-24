@@ -30,7 +30,7 @@ async function main() {
 
   console.log('Создание пользователей...');
   const users = await measureTime('Создание пользователей', () =>
-    createUsers(100000),
+    createUsers(50),
   );
   // const users = await prisma.user.findMany();
   console.log('Пользователи созданы успешно');
@@ -45,7 +45,7 @@ async function main() {
 
   console.log('Создание коворкингов...');
   await measureTime('Создание коворкингов', () =>
-    createWorkspaces(200000, ownerIds),
+    createWorkspaces(10, ownerIds),
   );
   console.log('Коворкинги созданы успешно');
 
@@ -54,7 +54,7 @@ async function main() {
 
   console.log('Создание зон коворкингов...');
   await measureTime('Создание зон коворкингов', () =>
-    createWorkspaceZones(500000, workspaceIds),
+    createWorkspaceZones(100, workspaceIds),
   );
   console.log('Зоны коворкингов созданы успешно');
 
@@ -62,25 +62,23 @@ async function main() {
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
   console.log('Создание рабочих мест...');
-  await measureTime('Создание рабочих мест', () =>
-    createPlaces(1000000, zoneIds),
-  );
+  await measureTime('Создание рабочих мест', () => createPlaces(1000, zoneIds));
   console.log('Рабочие места созданы успешно');
 
   const places = await prisma.place.findMany();
   const placeIds = places.map((place) => place.id);
 
   const clientIds = users
-    .map((user) => {
+    .map((user: any) => {
       if (user.roleId === 1) {
         return user.id;
       }
     })
-    .filter((id): id is number => id !== undefined);
+    .filter((id: any): id is number => id !== undefined);
 
   console.log('Создание бронирований...');
   await measureTime('Создание бронирований', () =>
-    createBookings(5000000, clientIds, placeIds),
+    createBookings(2000, clientIds, placeIds),
   );
   console.log('Бронирования созданы успешно');
 

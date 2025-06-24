@@ -1,5 +1,5 @@
 import { PrismaClient, User } from '@prisma/client';
-import { faker } from '@faker-js/faker';
+import { fakerRU as faker } from '@faker-js/faker';
 import { genSalt, hash } from 'bcrypt';
 import * as dotenv from 'dotenv';
 

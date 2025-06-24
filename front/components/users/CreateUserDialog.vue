@@ -132,7 +132,7 @@ import { useToast } from "vue-toastification";
 import api from "@/services/api";
 import { useWorkspaceStore } from "@/stores/workspace";
 import CommonInputSelect from "@/components/common/CommonInputSelect.vue";
-import { fa, faker } from "@faker-js/faker";
+import { faker } from "@faker-js/faker";
 
 interface Props {
   modelValue: boolean;

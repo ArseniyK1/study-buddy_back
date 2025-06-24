@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString, IsDateString } from 'class-validator';
+import { IsInt, IsString, IsDateString, IsOptional } from 'class-validator';
 
 export class GetPlaceBookingsDto {
   @ApiProperty({
@@ -8,5 +8,14 @@ export class GetPlaceBookingsDto {
   })
   @IsString()
   @IsDateString()
-  date: string;
+  @IsOptional()
+  date?: string;
+
+  @ApiProperty({
+    description: 'Список ID рабочих мест',
+    example: [1, 2, 3],
+  })
+  @IsInt({ each: true })
+  @IsOptional()
+  placeIds?: number[];
 }

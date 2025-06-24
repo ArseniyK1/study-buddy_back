@@ -28,6 +28,8 @@ interface GetMyBookingsParams {
   startDate?: string;
   endDate?: string;
   query?: string;
+  date?: string;
+  placeIds?: number[];
 }
 
 export const useBookingsStore = defineStore("bookings", () => {
@@ -63,6 +65,38 @@ export const useBookingsStore = defineStore("bookings", () => {
       hasMore.value = data.length === pageSize.value;
     } catch (err) {
       error.value = "Failed to fetch bookings";
+      console.error(err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchWorkplaceBookings = async (
+    id: number,
+    params: GetMyBookingsParams = {},
+    reset = false
+  ) => {
+    if (loading.value) return;
+
+    loading.value = true;
+    error.value = null;
+    try {
+      if (reset) {
+        hasMore.value = true;
+      }
+
+      const { data } = await api.get<Booking[]>(`/workplace/${id}/bookings`, {
+        params: {
+          ...params,
+          offset: params.offset ?? (currentPage.value - 1) * pageSize.value,
+          limit: params.limit ?? pageSize.value,
+        },
+      });
+
+      bookings.value = data;
+      hasMore.value = data.length === pageSize.value;
+    } catch (err) {
+      error.value = "Failed to fetch workplace bookings";
       console.error(err);
     } finally {
       loading.value = false;
@@ -125,6 +159,7 @@ export const useBookingsStore = defineStore("bookings", () => {
     pageSize,
     hasMore,
     fetchBookings,
+    fetchWorkplaceBookings,
     createBooking,
     cancelBooking,
     resetPagination,

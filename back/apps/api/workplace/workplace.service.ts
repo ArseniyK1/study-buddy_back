@@ -179,21 +179,25 @@ export class WorkplaceService {
     });
   }
 
-  async getPlaceBookings(placeId: number, date?: string) {
-    const place = await this.prisma.place.findUnique({
-      where: { id: placeId },
-    });
+  async getPlaceBookings(
+    placeId: number | null,
+    date?: string,
+    placeIds?: number[],
+  ) {
+    console.log('Received parameters:', { placeId, date, placeIds });
 
-    if (!place) {
-      throw new NotFoundException(`Рабочее место с ID ${placeId} не найдено`);
+    let where: any = {};
+
+    // Используем placeIds, если они переданы, иначе используем placeId
+    if (placeIds && placeIds.length > 0) {
+      where.placeId = { in: placeIds };
+    } else if (placeId) {
+      where.placeId = placeId;
     }
 
-    let where: any = { placeId };
     if (date) {
-      // Получаем начало и конец дня в UTC
       const startOfDay = new Date(date + 'T00:00:00.000Z');
       const endOfDay = new Date(date + 'T23:59:59.999Z');
-      // Пересечение бронирования с этим днем
       where = {
         ...where,
         OR: [
@@ -204,11 +208,17 @@ export class WorkplaceService {
       };
     }
 
-    return this.prisma.booking.findMany({
+    console.log('Query where condition:', where);
+
+    const bookings = await this.prisma.booking.findMany({
       where,
       include: {
         user: true,
       },
     });
+
+    console.log('Found bookings:', bookings);
+
+    return bookings;
   }
 }

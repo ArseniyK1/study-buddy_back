@@ -154,7 +154,10 @@ const filteredBookings = computed(() => {
   ); // 23:59
 
   return props.place.bookings.filter((booking) => {
-    if (booking.status !== "ACTIVE") return false;
+    // Изменяем условие, чтобы включить оба статуса
+    if (booking.status !== "ACTIVE" && booking.status !== "PENDING") {
+      return false;
+    }
 
     const bookingStart = new Date(booking.startTime);
     const bookingEnd = new Date(booking.endTime);
@@ -229,7 +232,8 @@ const checkTimeConflict = (start: Date, end: Date) => {
   if (!props.place.bookings) return false;
 
   return props.place.bookings.some((booking) => {
-    if (booking.status !== "ACTIVE") return false;
+    if (booking.status !== "ACTIVE" || booking.status !== "COMPLETED")
+      return false;
 
     const bookingStart = new Date(booking.startTime);
     const bookingEnd = new Date(booking.endTime);

@@ -1,3 +1,4 @@
+<!-- pages/admin.vue -->
 <template>
   <div class="bg-gray-900 min-h-screen p-8">
     <h1 class="text-2xl font-bold text-gray-200 mb-6">
@@ -7,7 +8,7 @@
       <button
         v-for="t in tabs"
         :key="t.value"
-        @click="tab = t.value"
+        @click="handleTabChange(t.value)"
         :class="[
           'px-4 py-2 rounded',
           tab === t.value
@@ -126,145 +127,83 @@
     </div>
 
     <!-- Бронирования -->
+
     <div v-if="tab === 'bookings'">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-200">Бронирования</h2>
-      </div>
-      <table class="min-w-full bg-gray-800 rounded">
-        <thead>
-          <tr class="text-gray-400">
-            <th class="px-4 py-2 text-white">ID</th>
-            <th class="px-4 py-2 text-white">Место</th>
-            <th class="px-4 py-2 text-white">Зона</th>
-            <th class="px-4 py-2 text-white">Период</th>
-            <th class="px-4 py-2 text-white">Статус</th>
-            <th class="px-4 py-2 text-white">Цена</th>
-            <th class="px-4 py-2 text-white">Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="booking in bookings"
-            :key="booking.id"
-            class="border-b border-gray-700"
-          >
-            <td class="px-4 py-2 text-white">{{ booking.id }}</td>
-            <td class="px-4 py-2 text-white">{{ booking.place?.name }}</td>
-            <td class="px-4 py-2 text-white">
-              {{ booking.place?.zone?.name }}
-            </td>
-            <td class="px-4 py-2 text-white">
-              {{ formatPeriod(booking.startTime, booking.endTime) }}
-            </td>
-            <td class="px-4 py-2 text-white">{{ booking.status }}</td>
-            <td class="px-4 py-2 text-white">{{ booking.totalPrice }}</td>
-            <td class="px-4 py-2 space-x-2 text-white">
-              <button
-                class="bg-green-600 text-white px-2 py-1 rounded"
-                @click="acceptBooking(booking.id)"
-              >
-                Принять
-              </button>
-              <button
-                class="bg-red-600 text-white px-2 py-1 rounded"
-                @click="rejectBooking(booking.id)"
-              >
-                Отклонить
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <BookingManagement :placeIds="placeIds" />
     </div>
 
-    <!-- Модалки (заглушки) -->
-    <Modal v-if="showZoneModal" @close="showZoneModal = false">
+    <!-- Модальное окно для зон -->
+    <Modal
+      v-if="showZoneModal"
+      @close="showZoneModal = false"
+      @confirm="saveZone"
+      title="Управление зоной"
+      confirmButtonText="Сохранить"
+      cancelButtonText="Отмена"
+    >
       <div class="p-4">
         <h3 class="text-lg font-bold mb-4">
           {{ editingZone ? "Редактировать зону" : "Добавить зону" }}
         </h3>
-        <!-- Форма для зоны -->
         <form @submit.prevent="saveZone">
           <input
             v-model="zoneForm.name"
             placeholder="Название"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
           <input
             v-model="zoneForm.description"
             placeholder="Описание"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
           <input
             v-model.number="zoneForm.pricePerHour"
             placeholder="Цена/час"
             type="number"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
           <input
             v-model.number="zoneForm.maxPlaces"
             placeholder="Макс. мест"
             type="number"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
-          <div class="flex justify-end space-x-2 mt-4">
-            <button
-              type="button"
-              class="px-4 py-2 bg-gray-600 text-white rounded"
-              @click="showZoneModal = false"
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-indigo-600 text-white rounded"
-            >
-              Сохранить
-            </button>
-          </div>
         </form>
       </div>
     </Modal>
-    <Modal v-if="showPlaceModal" @close="showPlaceModal = false">
+
+    <!-- Модальное окно для мест -->
+    <Modal
+      v-if="showPlaceModal"
+      @close="showPlaceModal = false"
+      @confirm="savePlace"
+      title="Управление местом"
+      confirmButtonText="Сохранить"
+      cancelButtonText="Отмена"
+    >
       <div class="p-4">
         <h3 class="text-lg font-bold mb-4">
           {{ editingPlace ? "Редактировать место" : "Добавить место" }}
         </h3>
-        <!-- Форма для места -->
         <form @submit.prevent="savePlace">
           <input
             v-model="placeForm.name"
             placeholder="Название"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
           <input
             v-model="placeForm.description"
             placeholder="Описание"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           />
           <select
             v-model.number="placeForm.zoneId"
-            class="mb-2 w-full px-2 py-1 rounded"
+            class="mb-2 w-full px-2 py-1 rounded bg-gray-700 text-white"
           >
             <option v-for="zone in zones" :key="zone.id" :value="zone.id">
               {{ zone.name }}
             </option>
           </select>
-          <div class="flex justify-end space-x-2 mt-4">
-            <button
-              type="button"
-              class="px-4 py-2 bg-gray-600 text-white rounded"
-              @click="showPlaceModal = false"
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-indigo-600 text-white rounded"
-            >
-              Сохранить
-            </button>
-          </div>
         </form>
       </div>
     </Modal>
@@ -276,6 +215,7 @@ import { ref, reactive, onMounted, computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/services/api";
 import Modal from "@/components/ui/Modal.vue";
+import BookingManagement from "@/components/booking/BookingManagement.vue";
 
 const authStore = useAuthStore();
 const workspace = computed(() => authStore.getMyWorkspaceComputed);
@@ -288,12 +228,12 @@ const tabs = [
 
 const zones = ref<any[]>([]);
 const places = ref<any[]>([]);
-const bookings = ref<any[]>([]);
+const placeIds = ref<number[]>([]); // Добавляем массив для хранения placeIds
 
-// Модалки и формы
 const showZoneModal = ref(false);
 const editingZone = ref<any>(null);
 const zoneForm = reactive({
+  id: null as number | null,
   name: "",
   description: "",
   pricePerHour: 0,
@@ -302,32 +242,43 @@ const zoneForm = reactive({
 
 const showPlaceModal = ref(false);
 const editingPlace = ref<any>(null);
-const placeForm = reactive({ name: "", description: "", zoneId: null });
+const placeForm = reactive({
+  id: null as number | null,
+  name: "",
+  description: "",
+  zoneId: null as number | null,
+});
 
 function openZoneModal(zone: any = null) {
   editingZone.value = zone;
   if (zone) {
-    Object.assign(zoneForm, zone);
+    zoneForm.id = zone.id ?? null;
+    zoneForm.name = zone.name ?? "";
+    zoneForm.description = zone.description ?? "";
+    zoneForm.pricePerHour = zone.pricePerHour ?? 0;
+    zoneForm.maxPlaces = zone.maxPlaces ?? 0;
   } else {
-    Object.assign(zoneForm, {
-      name: "",
-      description: "",
-      pricePerHour: 0,
-      maxPlaces: 0,
-    });
+    zoneForm.id = null;
+    zoneForm.name = "";
+    zoneForm.description = "";
+    zoneForm.pricePerHour = 0;
+    zoneForm.maxPlaces = 0;
   }
   showZoneModal.value = true;
 }
+
 function openPlaceModal(place: any = null) {
   editingPlace.value = place;
   if (place) {
-    Object.assign(placeForm, place);
+    placeForm.id = place.id ?? null;
+    placeForm.name = place.name ?? "";
+    placeForm.description = place.description ?? "";
+    placeForm.zoneId = place.zoneId ?? null;
   } else {
-    Object.assign(placeForm, {
-      name: "",
-      description: "",
-      zoneId: zones.value[0]?.id || null,
-    });
+    placeForm.id = null;
+    placeForm.name = "";
+    placeForm.description = "";
+    placeForm.zoneId = zones.value[0]?.id || null;
   }
   showPlaceModal.value = true;
 }
@@ -336,80 +287,101 @@ function getZoneName(zoneId: number) {
   return zones.value.find((z: any) => z.id === zoneId)?.name || "";
 }
 
-function formatPeriod(start: string, end: string) {
-  return `${new Date(start).toLocaleString()} — ${new Date(
-    end
-  ).toLocaleString()}`;
-}
-
-// CRUD-заглушки
 async function fetchAll() {
   if (!workspace.value?.id) return;
-  // zones
-  const { data: zs } = await api.get(
-    `/workspace-zones?workspaceId=${workspace.value.id}`
-  );
-  zones.value = zs;
-  // places (по всем зонам)
-  const allPlaces = [];
-  for (const z of zs) {
-    if (z.places)
-      allPlaces.push(...z.places.map((p: any) => ({ ...p, zoneId: z.id })));
+
+  try {
+    // Загрузка зон
+    const { data: zs } = await api.get(
+      `/workspace-zones?workspaceId=${workspace.value.id}`
+    );
+    zones.value = zs;
+
+    // Загрузка мест и получение placeIds
+    const allPlaces = [];
+    for (const z of zs) {
+      if (z.places) {
+        allPlaces.push(...z.places.map((p: any) => ({ ...p, zoneId: z.id })));
+      }
+    }
+    places.value = allPlaces;
+    placeIds.value = allPlaces.map((p: any) => p.id); // Получаем placeIds
+  } catch (error) {
+    console.error("Ошибка при загрузке данных:", error);
   }
-  places.value = allPlaces;
-  // bookings (по всем местам)
-  const placeIds = allPlaces.map((p: any) => p.id);
-  if (placeIds.length) {
-    const { data: bs } = await api.get(
-      `/booking?placeIds=${placeIds.join(",")}`
-    ); // заглушка
-    bookings.value = bs;
-  } else {
-    bookings.value = [];
-  }
+}
+
+async function handleTabChange(tabValue: string) {
+  tab.value = tabValue;
 }
 
 async function saveZone() {
-  if (!workspace.value?.id) return;
-  if (editingZone.value) {
-    // update
-    await api.patch(`/workspace-zones/${editingZone.value.id}`, zoneForm); // заглушка
-  } else {
-    // create
-    await api.post(`/workspace-zones`, {
-      ...zoneForm,
-      workspaceId: workspace.value.id,
-    });
+  try {
+    if (!workspace.value?.id) return;
+
+    if (zoneForm.id) {
+      await api.patch(`/workspace-zones/${zoneForm.id}`, {
+        name: zoneForm.name,
+        description: zoneForm.description,
+        pricePerHour: zoneForm.pricePerHour,
+        maxPlaces: zoneForm.maxPlaces,
+      });
+    } else {
+      await api.post(`/workspace-zones`, {
+        name: zoneForm.name,
+        description: zoneForm.description,
+        pricePerHour: zoneForm.pricePerHour,
+        maxPlaces: zoneForm.maxPlaces,
+        workspaceId: workspace.value.id,
+      });
+    }
+
+    showZoneModal.value = false;
+    await fetchAll();
+  } catch (error) {
+    console.error("Ошибка при сохранении зоны:", error);
   }
-  showZoneModal.value = false;
-  await fetchAll();
 }
+
 async function deleteZone(id: number) {
-  await api.delete(`/workspace-zones/${id}`); // заглушка
-  await fetchAll();
-}
-async function savePlace() {
-  if (editingPlace.value) {
-    await api.patch(`/workplace/${editingPlace.value.id}`, placeForm); // заглушка
-  } else {
-    await api.post(`/workplace`, placeForm);
+  try {
+    await api.delete(`/workspace-zones/${id}`);
+    await fetchAll();
+  } catch (error) {
+    console.error("Ошибка при удалении зоны:", error);
   }
-  showPlaceModal.value = false;
-  await fetchAll();
 }
+
+async function savePlace() {
+  try {
+    if (placeForm.id) {
+      await api.patch(`/workplace/${placeForm.id}`, {
+        name: placeForm.name,
+        description: placeForm.description,
+        zoneId: placeForm.zoneId,
+      });
+    } else {
+      await api.post(`/workplace`, {
+        name: placeForm.name,
+        description: placeForm.description,
+        zoneId: placeForm.zoneId,
+      });
+    }
+
+    showPlaceModal.value = false;
+    await fetchAll();
+  } catch (error) {
+    console.error("Ошибка при сохранении места:", error);
+  }
+}
+
 async function deletePlace(id: number) {
-  await api.delete(`/workplace/${id}`); // заглушка
-  await fetchAll();
-}
-async function acceptBooking(id: number) {
-  // заглушка
-  await api.patch(`/booking/${id}`, { status: "APPROVED" });
-  await fetchAll();
-}
-async function rejectBooking(id: number) {
-  // заглушка
-  await api.patch(`/booking/${id}`, { status: "REJECTED" });
-  await fetchAll();
+  try {
+    await api.delete(`/workplace/${id}`);
+    await fetchAll();
+  } catch (error) {
+    console.error("Ошибка при удалении места:", error);
+  }
 }
 
 onMounted(async () => {

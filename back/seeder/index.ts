@@ -6,6 +6,7 @@ import { createWorkspaces } from './workspaces.seed';
 import { createWorkspaceZones } from './workspace-zones.seed';
 import { createPlaces } from './places.seed';
 import { createBookings } from './bookings.seed';
+import { createWorkspaceManagers } from './workspace-manager.seed';
 
 dotenv.config();
 const prisma = new PrismaClient();
@@ -29,23 +30,23 @@ async function main() {
   console.log('Роли созданы успешно');
 
   console.log('Создание пользователей...');
-  const users = await measureTime('Создание пользователей', () =>
-    createUsers(6),
-  );
-  // const users = await prisma.user.findMany();
+  await measureTime('Создание пользователей', createUsers);
+  const users = await prisma.user.findMany();
   console.log('Пользователи созданы успешно');
 
-  const ownerIds = users
-    .map((user: any) => {
-      if (user.roleId === 2) {
-        return user.id;
-      }
-    })
-    .filter((id: any): id is number => id !== undefined);
+  // Получаем id двух админов и двух менеджеров
+  const adminIds = users
+    .filter((u) => u.roleId === 2)
+    .map((u) => u.id)
+    .slice(0, 2);
+  const managerIds = users
+    .filter((u) => u.roleId === 3)
+    .map((u) => u.id)
+    .slice(0, 2);
 
   console.log('Создание коворкингов...');
   await measureTime('Создание коворкингов', () =>
-    createWorkspaces(10, ownerIds),
+    createWorkspaces(2, adminIds),
   );
   console.log('Коворкинги созданы успешно');
 
@@ -54,7 +55,7 @@ async function main() {
 
   console.log('Создание зон коворкингов...');
   await measureTime('Создание зон коворкингов', () =>
-    createWorkspaceZones(20, workspaceIds),
+    createWorkspaceZones(4, workspaceIds),
   );
   console.log('Зоны коворкингов созданы успешно');
 
@@ -62,7 +63,7 @@ async function main() {
   const zoneIds = workspaceZones.map((zone) => zone.id);
 
   console.log('Создание рабочих мест...');
-  await measureTime('Создание рабочих мест', () => createPlaces(400, zoneIds));
+  await measureTime('Создание рабочих мест', () => createPlaces(40, zoneIds));
   console.log('Рабочие места созданы успешно');
 
   const places = await prisma.place.findMany();
@@ -81,6 +82,13 @@ async function main() {
     createBookings(10, clientIds, placeIds),
   );
   console.log('Бронирования созданы успешно');
+
+  // Привязка менеджеров к двум разным коворкингам
+  console.log('Привязка менеджеров к коворкингам...');
+  await measureTime('Привязка менеджеров', () =>
+    createWorkspaceManagers(2, workspaceIds, managerIds),
+  );
+  console.log('Менеджеры привязаны успешно');
 
   const totalEndTime = Date.now();
   const totalDuration = (totalEndTime - totalStartTime) / 1000;

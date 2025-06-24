@@ -96,11 +96,20 @@ export class WorkplaceController {
     summary: 'Получить все бронирования для рабочего места за дату',
   })
   @ApiParam({ name: 'id', description: 'ID рабочего места' })
-  @ApiQuery({ name: 'date', description: 'Дата (YYYY-MM-DD)', required: true })
-  getPlaceBookings(
+  @ApiQuery({ name: 'date', description: 'Дата (YYYY-MM-DD)', required: false })
+  @ApiQuery({
+    name: 'placeIds',
+    description: 'Список ID рабочих мест',
+    required: false,
+  })
+  async getPlaceBookings(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: GetPlaceBookingsDto,
   ): Promise<BookingResponseDto[] | any> {
-    return this.workplaceService.getPlaceBookings(id, query.date);
+    return this.workplaceService.getPlaceBookings(
+      id,
+      query.date,
+      query.placeIds,
+    );
   }
 }

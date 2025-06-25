@@ -27,6 +27,7 @@ import {
 import { IRequest } from '@shared/types/IRequest.interface';
 import { WorkplaceByIdDto } from './dto/workplace-by-id.dto';
 import { GetPlaceBookingsDto } from './dto/get-place-bookings.dto';
+import { GetPlaceBookingsOldDto } from './dto/get-place-bookings-old.dto';
 
 @ApiTags('Рабочее место (Workplace)')
 @Controller('workplace')
@@ -105,13 +106,9 @@ export class WorkplaceController {
   })
   async getPlaceBookings_old(
     @Param('id', ParseIntPipe) id: number,
-    @Query() query: GetPlaceBookingsDto,
+    @Query() query: GetPlaceBookingsOldDto,
   ): Promise<BookingResponseDto[] | any> {
-    return this.workplaceService.getPlaceBookings_old(
-      id,
-      query.date,
-      query.placeIds,
-    );
+    return this.workplaceService.getPlaceBookings_old(id, query.date);
   }
 
   // workplace.controller.ts

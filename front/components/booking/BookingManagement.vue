@@ -63,8 +63,8 @@
             :key="booking.id"
             class="border-b border-gray-700"
           >
-            <td class="px-4 py-2 text-white">{{ booking.id }}</td>
-            <td class="px-4 py-2 text-white">{{ booking.user.id }}</td>
+            <td class="px-4 py-2 text-white">{{ booking?.id }}</td>
+            <td class="px-4 py-2 text-white">{{ booking?.user?.id }}</td>
             <td class="px-4 py-2 text-white">
               {{
                 `${booking.user.lastName} ${booking.user.firstName} ${
@@ -141,9 +141,20 @@ const handleFilterChange = () => {
 };
 
 const formatPeriod = (start: string, end: string) => {
-  return `${new Date(start).toLocaleString()} — ${new Date(
-    end
-  ).toLocaleString()}`;
+  const format = (dateString: string) => {
+    const date = new Date(dateString);
+    // Получаем UTC часы и минуты
+    const hours = date.getUTCHours().toString().padStart(2, "0");
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+    // Форматируем дату
+    const day = date.getUTCDate().toString().padStart(2, "0");
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+    const year = date.getUTCFullYear();
+
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  };
+
+  return `${format(start)} — ${format(end)}`;
 };
 
 const acceptBooking = async (id: number) => {

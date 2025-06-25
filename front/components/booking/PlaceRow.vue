@@ -267,7 +267,6 @@ const handleTimelineClick = (event: MouseEvent) => {
   const selectedDate = props.days[dayIndex].date;
 
   if (!isCurrentPlace.value) {
-    // First click - select place and set start time
     emit(
       "place-select",
       props.place,

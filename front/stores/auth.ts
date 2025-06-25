@@ -122,6 +122,32 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  const linkTelegramAccount = async (telegramData: any) => {
+    try {
+      const { data } = await api.post("/auth/link-telegram", telegramData);
+      await fetchUser(); // Обновляем данные пользователя
+      return data;
+    } catch (error) {
+      toast.error(
+        (error as ApiError).message || "Failed to link Telegram account"
+      );
+      throw error;
+    }
+  };
+
+  const unlinkTelegramAccount = async () => {
+    try {
+      const { data } = await api.post("/auth/unlink-telegram");
+      await fetchUser(); // Обновляем данные пользователя
+      return data;
+    } catch (error) {
+      toast.error(
+        (error as ApiError).message || "Failed to unlink Telegram account"
+      );
+      throw error;
+    }
+  };
+
   async function signUp(
     email: string,
     password: string,
@@ -213,6 +239,8 @@ export const useAuthStore = defineStore("auth", () => {
     initialize,
     setTokens,
     signIn,
+    linkTelegramAccount,
+    unlinkTelegramAccount,
     signUp,
     fetchUser,
     logout,

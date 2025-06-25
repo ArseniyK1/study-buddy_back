@@ -1,4 +1,15 @@
-import { Body, Controller, Post, Request, Get, Put } from '@nestjs/common';
+// auth.controller.ts
+import {
+  Body,
+  Controller,
+  Post,
+  Request,
+  Get,
+  Put,
+  UnauthorizedException,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sing-in.dto';
 import {
@@ -14,11 +25,19 @@ import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Metadata } from '@grpc/grpc-js';
 import { User } from 'shared/generated/auth';
 import { IRequest } from '@shared/types/IRequest.interface';
+import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { TelegramService } from './telegram.service';
+import { AuthGuard } from './guard/auth.guard';
+import { PrismaService } from '@prisma/prisma.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly telegramService: TelegramService,
+    private prisma: PrismaService,
+  ) {}
 
   @Public()
   @Post('sign-in')
@@ -75,5 +94,84 @@ export class AuthController {
   @ApiOperation({ summary: 'Получение данных о своем коворкинге' })
   async getMyWorkspace(@Request() req: IRequest) {
     return this.authService.getMyWorkspace(req);
+  }
+
+  @Post('telegram-login')
+  @ApiOperation({ summary: 'Login with Telegram' })
+  @ApiBody({ type: TelegramAuthDto })
+  async telegramLogin(@Body() dto: TelegramAuthDto) {
+    // Валидация данных Telegram
+    const isValid = await this.telegramService.validateTelegramAuth(dto);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid Telegram auth data');
+    }
+
+    // Поиск пользователя по telegramId
+    const user = await this.telegramService.findUserByTelegramId(
+      dto.id.toString(),
+    );
+    if (!user) {
+      throw new NotFoundException(
+        'User with this Telegram account not found. Please link your Telegram account first.',
+      );
+    }
+
+    // Генерация JWT токена
+    const token = this.telegramService.generateJwtToken(user);
+
+    return {
+      access_token: token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role?.value,
+        telegramId: user.telegramId,
+        telegramUsername: user.telegramUsername,
+      },
+    };
+  }
+
+  @Post('link-telegram')
+  @ApiOperation({ summary: 'Link Telegram account to user' })
+  async linkTelegram(@Body() dto: TelegramAuthDto, @Request() req: IRequest) {
+    const isValid = await this.telegramService.validateTelegramAuth(dto);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid Telegram auth data');
+    }
+
+    const user = await this.telegramService.linkTelegramToUser(
+      req.user.userId,
+      dto,
+    );
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        telegramId: user.telegramId,
+        telegramUsername: user.telegramUsername,
+      },
+    };
+  }
+
+  @Post('unlink-telegram')
+  @ApiOperation({ summary: 'Unlink Telegram account from user' })
+  async unlinkTelegram(@Request() req: IRequest) {
+    const user = await this.prisma.user.update({
+      where: { id: req.user.userId },
+      data: {
+        telegramId: null,
+        telegramUsername: null,
+      },
+    });
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        telegramId: user.telegramId,
+      },
+    };
   }
 }

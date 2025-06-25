@@ -8,6 +8,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TokenInterceptor } from './interceptors/token.interceptor';
 import { PrismaService } from '@prisma/prisma.service';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { TelegramService } from './telegram.service';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -28,6 +30,10 @@ import { WorkspaceService } from '../workspace/workspace.service';
         },
       },
     ]),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+    }),
   ],
   controllers: [AuthController],
   providers: [
@@ -38,6 +44,7 @@ import { WorkspaceService } from '../workspace/workspace.service';
     },
     PrismaService,
     WorkspaceService,
+    TelegramService,
   ],
   exports: [AuthService],
 })

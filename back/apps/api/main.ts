@@ -14,6 +14,7 @@ async function bootstrap() {
   // Set up the logger
   const logger = await app.resolve(LoggerService);
   app.useLogger(logger);
+  app.enableCors();
 
   // app.connectMicroservice<MicroserviceOptions>(grpcClientOptions);
 

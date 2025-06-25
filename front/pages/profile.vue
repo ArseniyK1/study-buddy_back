@@ -56,6 +56,32 @@
                 {{ user?.role?.description }}
               </p>
             </div>
+            <!-- Telegram Info -->
+            <div>
+              <label class="block text-sm font-medium text-gray-400"
+                >Telegram</label
+              >
+              <div class="mt-1">
+                <div v-if="user?.telegramId" class="flex items-center">
+                  <span class="text-lg text-gray-200">
+                    @{{ user.telegramUsername || "привязанный аккаунт" }}
+                  </span>
+                  <button
+                    @click="unlinkTelegram"
+                    class="ml-2 text-sm text-red-400 hover:text-red-300"
+                  >
+                    Отвязать
+                  </button>
+                </div>
+                <button
+                  v-else
+                  @click="linkTelegram"
+                  class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Привязать Telegram
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -145,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
 import { useNotify } from "../services/notify";
@@ -154,6 +180,7 @@ const authStore = useAuthStore();
 const user = computed(() => authStore.getProfileComputed);
 const loading = ref(false);
 const notify = useNotify();
+const telegramWindow = ref<Window | null>(null);
 
 const passwordForm = ref({
   currentPassword: "",
@@ -186,4 +213,55 @@ const changePassword = async () => {
     loading.value = false;
   }
 };
+
+const linkTelegram = () => {
+  telegramWindow.value = window.open(
+    "https://oauth.telegram.org/auth?bot_id=7933596215&origin=" +
+      encodeURIComponent(window.location.origin),
+    "TelegramAuth",
+    "width=600,height=400"
+  );
+};
+
+const handleTelegramAuth = async (event: MessageEvent) => {
+  if (event.origin !== "https://oauth.telegram.org") return;
+
+  try {
+    loading.value = true;
+    await authStore.linkTelegramAccount(event.data);
+    notify.success("Успех", "Telegram успешно привязан");
+  } catch (error) {
+    notify.error("Ошибка", "Не удалось привязать Telegram");
+  } finally {
+    loading.value = false;
+    if (telegramWindow.value) {
+      telegramWindow.value.close();
+    }
+  }
+};
+
+const unlinkTelegram = async () => {
+  try {
+    loading.value = true;
+    await authStore.unlinkTelegramAccount();
+    notify.success("Успех", "Telegram успешно отвязан");
+  } catch (error) {
+    notify.error("Ошибка", "Не удалось отвязать Telegram");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Проверяем привязку Telegram при загрузке
+onMounted(() => {
+  window.addEventListener("message", handleTelegramAuth);
+});
+
+// Очищаем слушатель при размонтировании
+onUnmounted(() => {
+  window.removeEventListener("message", handleTelegramAuth);
+  if (telegramWindow.value) {
+    telegramWindow.value.close();
+  }
+});
 </script>

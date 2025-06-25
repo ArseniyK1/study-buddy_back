@@ -19,7 +19,7 @@ model User {
   roleId            Int                @map("role_id")
   banned            Boolean            @default(false)
   reason_banned     String?            @map("reason_banned")
-  telegramId        String?            @map("telegram_id")
+  telegramId        String?            @map("telegram_id") @unique
   telegramUsername  String?            @map("telegram_username")
 
   bookings          Booking[]

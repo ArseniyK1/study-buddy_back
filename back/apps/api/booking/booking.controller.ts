@@ -47,4 +47,14 @@ export class BookingController {
   remove(@Param('id') id: string) {
     return this.bookingService.remove(+id);
   }
+
+  @Patch('accept/:id')
+  accept(@Param('id') id: string) {
+    return this.bookingService.accept(+id);
+  }
+
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.bookingService.reject(+id);
+  }
 }

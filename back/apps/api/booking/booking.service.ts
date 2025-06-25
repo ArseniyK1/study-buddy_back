@@ -161,4 +161,58 @@ export class BookingService {
       },
     });
   }
+
+  async accept(id: number) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.status !== 'PENDING') {
+      throw new BadRequestException('Only PENDING bookings can be accepted');
+    }
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+      include: {
+        place: {
+          include: {
+            zone: true,
+          },
+        },
+        user: true,
+      },
+    });
+  }
+
+  async reject(id: number) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.status !== 'PENDING') {
+      throw new BadRequestException('Only PENDING bookings can be rejected');
+    }
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+      include: {
+        place: {
+          include: {
+            zone: true,
+          },
+        },
+        user: true,
+      },
+    });
+  }
 }

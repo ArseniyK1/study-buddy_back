@@ -97,6 +97,18 @@ export class AuthService implements OnModuleInit, AuthServiceClient {
   }
 
   async getMyWorkspace(req: IRequest) {
+    if (req.user.role === 'ADMIN') {
+      const workspace = await this.prisma.workspace.findFirst({
+        where: {
+          ownerId: req.user.userId,
+        },
+      });
+      if (!workspace) {
+        return { success: false, data: {} };
+      }
+      return workspace;
+    }
+
     const workspaceManagerInfo = await this.prisma.workspaceManager.findFirst({
       where: {
         managerId: req.user.userId,

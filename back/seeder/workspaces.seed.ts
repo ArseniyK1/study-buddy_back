@@ -1,5 +1,5 @@
 import { PrismaClient, Workspace } from '@prisma/client';
-import { faker } from '@faker-js/faker';
+import { fakerRU as faker } from '@faker-js/faker';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

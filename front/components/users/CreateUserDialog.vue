@@ -9,7 +9,7 @@
       </h2>
 
       <!-- Role Selection for Super Admin -->
-      <div v-if="isSuperAdmin" class="mb-4">
+      <div v-if="isSuperAdmin || isAdmin" class="mb-4">
         <label class="block text-sm font-medium text-gray-300 mb-1">Роль</label>
         <select
           v-model="formData.roleId"
@@ -30,15 +30,25 @@
         <label class="block text-sm font-medium text-gray-300 mb-1"
           >Коворкинг</label
         >
-        <CommonInputSelect
-          v-model="formData.workspaceId"
-          :options="workspaces"
-          placeholder="Поиск коворкинга..."
-          :is-loading="isLoadingWorkspaces"
-          :has-more="hasMoreWorkspaces"
-          @search="handleWorkspaceSearch"
-          @load-more="handleLoadMoreWorkspaces"
-        />
+        <template v-if="isAdmin">
+          <input
+            type="text"
+            :value="authStore.getMyWorkspaceComputed.name"
+            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-400 focus:outline-none"
+            readonly
+          />
+        </template>
+        <template v-else>
+          <CommonInputSelect
+            v-model="formData.workspaceId"
+            :options="workspaces"
+            placeholder="Поиск коворкинга..."
+            :is-loading="isLoadingWorkspaces"
+            :has-more="hasMoreWorkspaces"
+            @search="handleWorkspaceSearch"
+            @load-more="handleLoadMoreWorkspaces"
+          />
+        </template>
       </div>
 
       <!-- User Form -->
@@ -132,7 +142,7 @@ import { useToast } from "vue-toastification";
 import api from "@/services/api";
 import { useWorkspaceStore } from "@/stores/workspace";
 import CommonInputSelect from "@/components/common/CommonInputSelect.vue";
-import { faker } from "@faker-js/faker";
+import { fakerRU as faker } from "@faker-js/faker";
 
 interface Props {
   modelValue: boolean;
@@ -174,6 +184,8 @@ const hasMoreWorkspaces = ref(true);
 const isSuperAdmin = computed(
   () => authStore.user?.role?.value === "SUPER_ADMIN"
 );
+
+const isAdmin = computed(() => authStore.user?.role?.value === "ADMIN");
 
 // Проверяем, выбрана ли роль менеджера или админа
 const isManagerOrAdminRole = computed(
@@ -293,4 +305,15 @@ const handleLoadMoreWorkspaces = () => {
 onMounted(async () => {
   await loadWorkspaces();
 });
+
+// После объявления formData
+watch(
+  () => isAdmin.value,
+  (isAdminNow) => {
+    if (isAdminNow && authStore.getMyWorkspaceComputed?.id) {
+      formData.value.workspaceId = authStore.getMyWorkspaceComputed.id;
+    }
+  },
+  { immediate: true }
+);
 </script>

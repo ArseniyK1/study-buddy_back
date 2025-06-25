@@ -11,10 +11,19 @@ interface Booking {
   totalPrice: number;
   userId: number;
   placeId: number;
-  place: {
+  user: {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    middleName: string | null;
+    phone: string;
+  };
+  // place может быть необязательным, если не всегда присутствует
+  place?: {
     id: number;
     name: string;
-    zone: {
+    zone?: {
       id: number;
       name: string;
     };
@@ -28,6 +37,8 @@ interface GetMyBookingsParams {
   startDate?: string;
   endDate?: string;
   query?: string;
+  date?: string;
+  placeIds?: number[];
 }
 
 export const useBookingsStore = defineStore("bookings", () => {
@@ -64,6 +75,82 @@ export const useBookingsStore = defineStore("bookings", () => {
     } catch (err) {
       error.value = "Failed to fetch bookings";
       console.error(err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // bookings.store.ts
+  const fetchWorkplaceBookings = async (
+    params: {
+      placeIds: number[];
+      date?: string;
+      status?: string;
+      offset?: number;
+      limit?: number;
+    },
+    reset = false
+  ) => {
+    if (loading.value) return;
+
+    loading.value = true;
+    error.value = null;
+    try {
+      if (reset) {
+        hasMore.value = true;
+      }
+
+      const { data } = await api.post<Booking[]>(`/workplace/bookings`, {
+        placeIds: params.placeIds,
+        date: params.date,
+        status: params.status,
+        offset: params.offset ?? (currentPage.value - 1) * pageSize.value,
+        limit: params.limit ?? pageSize.value,
+      });
+
+      bookings.value = data;
+      hasMore.value = data.length === pageSize.value;
+    } catch (err) {
+      error.value = "Failed to fetch workplace bookings";
+      console.error(err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const acceptBooking = async (bookingId: number) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      await api.patch(`/booking/accept/${bookingId}`);
+      // Обновляем статус бронирования в локальном хранилище
+      const index = bookings.value.findIndex((b) => b.id === bookingId);
+      if (index !== -1) {
+        bookings.value[index].status = "COMPLETED";
+      }
+    } catch (err) {
+      error.value = "Failed to accept booking";
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const rejectBooking = async (bookingId: number) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      await api.patch(`/booking/reject/${bookingId}`);
+      // Обновляем статус бронирования в локальном хранилище
+      const index = bookings.value.findIndex((b) => b.id === bookingId);
+      if (index !== -1) {
+        bookings.value[index].status = "CANCELLED";
+      }
+    } catch (err) {
+      error.value = "Failed to reject booking";
+      console.error(err);
+      throw err;
     } finally {
       loading.value = false;
     }
@@ -125,8 +212,11 @@ export const useBookingsStore = defineStore("bookings", () => {
     pageSize,
     hasMore,
     fetchBookings,
+    fetchWorkplaceBookings,
     createBooking,
     cancelBooking,
+    acceptBooking,
+    rejectBooking,
     resetPagination,
   };
 });

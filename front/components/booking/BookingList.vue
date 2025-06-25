@@ -27,10 +27,10 @@
           <div class="flex justify-between items-start">
             <div>
               <h3 class="text-lg font-medium text-gray-200">
-                {{ booking.place.name }}
+                {{ booking.place?.name }}
               </h3>
               <p class="text-sm text-gray-400">
-                {{ booking.place.zone.name }}
+                {{ booking.place?.zone?.name }}
               </p>
             </div>
             <div class="text-right">
@@ -57,13 +57,13 @@
             <div>
               <p class="text-sm text-gray-400">Время начала</p>
               <p class="text-gray-200">
-                {{ formatDate(booking.startTime) }}
+                {{ formatDateUTC(booking.startTime) }}
               </p>
             </div>
             <div>
               <p class="text-sm text-gray-400">Время окончания</p>
               <p class="text-gray-200">
-                {{ formatDate(booking.endTime) }}
+                {{ formatDateUTC(booking.endTime) }}
               </p>
             </div>
           </div>
@@ -96,9 +96,9 @@ interface Booking {
   endTime: string;
   status: string;
   totalPrice: number;
-  place: {
+  place?: {
     name: string;
-    zone: {
+    zone?: {
       name: string;
     };
   };
@@ -114,8 +114,35 @@ const emit = defineEmits<{
   (e: "booking-cancelled", bookingId: number): void;
 }>();
 
-const formatDate = (date: string) => {
-  return format(new Date(date), "d MMMM yyyy, HH:mm", { locale: ru });
+const formatDateUTC = (dateString: string) => {
+  const date = new Date(dateString);
+
+  // Получаем UTC компоненты
+  const day = date.getUTCDate();
+  const month = date.getUTCMonth();
+  const year = date.getUTCFullYear();
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+
+  // Форматируем вручную
+  const monthNames = [
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
+  ];
+
+  return `${day} ${monthNames[month]} ${year}, ${hours
+    .toString()
+    .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 };
 
 const getStatusText = (status: string) => {
@@ -126,6 +153,8 @@ const getStatusText = (status: string) => {
       return "Отменено";
     case "PENDING":
       return "Ожидает";
+    case "ACTIVE":
+      return "Активно";
     default:
       return status;
   }
